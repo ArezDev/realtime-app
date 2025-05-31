@@ -146,7 +146,7 @@ export default function Link() {
         </h1>
         {networkData && (
           <p className="text-xs mt-2 text-gray-400 dark:text-gray-500">
-            Network: <code>{networkData}</code>
+            {/* Network: <code>{networkData}</code> */}
           </p>
         )}
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">

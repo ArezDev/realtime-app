@@ -122,7 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       country: await getCountry(),
       source: userAgent,
       gadget: sourceType,
-      ip,
+      ip: ip,
       created_at: now,
     };
 

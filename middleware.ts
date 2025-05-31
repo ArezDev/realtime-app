@@ -22,5 +22,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/"], // proteksi halaman root
+  matcher: ["/tes"], // proteksi halaman root
 };
