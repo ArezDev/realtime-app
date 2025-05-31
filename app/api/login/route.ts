@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { sign } from "jsonwebtoken";
-import { app } from "@/lib/firebase"; // pastikan sudah dikonfigurasi
+import { app } from "@/lib/firebase";
 import { getFirestore, collection, getDocs, limit, query } from "firebase/firestore";
 
 export async function POST(req: Request) {
