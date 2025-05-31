@@ -46,7 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const startOfDay = dayjs(nowJS).startOf('day').toDate();
   const endOfDay = dayjs(nowJS).endOf('day').toDate();
 
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || '';
+  //const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || '';
+  const ip = req.socket.remoteAddress;
   const userAgent = req.headers["user-agent"] || "Unknown";
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   const getCountry = async ()  => {
@@ -122,7 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       country: await getCountry(),
       source: userAgent,
       gadget: sourceType,
-      ip: ip,
+      ip: ip || '',
       created_at: now,
     };
 
