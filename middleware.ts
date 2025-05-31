@@ -7,7 +7,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
 
-  if (!token) return NextResponse.redirect(new URL("/login/admin", request.url));
+  if (!token) return NextResponse.redirect(new URL("/login_disek", request.url));
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
