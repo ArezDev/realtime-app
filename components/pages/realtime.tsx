@@ -10,6 +10,7 @@ import { fetchDashboardData } from "@/lib/data";
 import { fetchLiveClicks } from "@/lib/get_klik";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { playAudio } from "@/lib/Notif_lead";
 
 export default function DashboardPage(props: any) {
   const [dashboardData, setDashboardData] = useState(props);
@@ -17,7 +18,6 @@ export default function DashboardPage(props: any) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const leadNotif = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,13 +54,9 @@ export default function DashboardPage(props: any) {
       console.log(payload);
       setTimeout(async () => {
         //play notif!
-        if (leadNotif.current) {
-          leadNotif.current.play().catch((e) => {
-            console.warn("Autoplay blocked or failed", e);
-          });
+          playAudio();
           const newData = await fetchDashboardData();
           setDashboardData(newData);
-        }
       }, 5000); // Delay 5 detik untuk menunggu data terupdate
     });
 
@@ -86,8 +82,6 @@ export default function DashboardPage(props: any) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 transition-colors">
-    {/* Notif Lead Baru */}
-    <audio ref={leadNotif} src="/notif-dana.mp3" preload="auto" />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
 

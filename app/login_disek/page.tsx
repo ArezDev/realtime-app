@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { initAudio } from '@/lib/Notif_lead';
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -9,12 +10,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    initAudio();
     e.preventDefault();
     try {
      const res = await axios.post("/api/login", { password });
      if (res.data?.success === true) {
         console.log('sukses login');
-        //router.push("/"); // ke halaman dashboard
         router.push("/");
      }
     } catch (err: any) {
