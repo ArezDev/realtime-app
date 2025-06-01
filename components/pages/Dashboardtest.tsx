@@ -1,13 +1,11 @@
-// "use client";
-
 import { Card, CardContent } from "@/components/ui/card";
 import ReactCountryFlag from "react-country-flag";
 import Image from "next/image";
 import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
 import { RiSmartphoneLine } from "react-icons/ri";
 import { FcFlashOn } from "react-icons/fc";
-import { useRef, useState } from "react";
-import { Clock, Cpu, Crown, DollarSign, EarthLock, Globe, MapPin, User, Wifi, X } from "lucide-react";
+import { useState } from "react";
+import { Clock, Cpu, DollarSign, EarthLock, Globe, MapPin, User, Wifi, X } from "lucide-react";
 import axios from "axios";
 import {
   isAfter,

@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { FcBarChart, FcFlashOn } from "react-icons/fc";
+import { FcBarChart } from "react-icons/fc";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { sign } from "jsonwebtoken";
-import { app } from "@/lib/firebase";
-import { getFirestore, collection, getDocs, limit, query } from "firebase/firestore";
+import { db } from "@/lib/firebaseAdmin";
 
 export async function POST(req: Request) {
   const { password } = await req.json();
-  const db = getFirestore(app);
-  const q = query(collection(db, "realtime_access"), limit(1));
-  const snapshot = await getDocs(q);
+  const cek = db.collection("realtime_access").limit(1);
+  const snapshot = await cek.get();
 
   if (snapshot.empty) {
     return NextResponse.json({ error: "No credentials set" }, { status: 500 });

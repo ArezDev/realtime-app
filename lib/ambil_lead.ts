@@ -23,62 +23,77 @@ export async function fetchDashboardData() {
   const todayDate = now.format("YYYY-MM-DD");
   const currentHour = now.format("HH");
 
-  // Jam mulai dan jam selesai untuk range satu jam saat ini
-  const startTime = now.hour() < 5 
-    ? now.subtract(1, "day").hour(5).minute(0).second(0) 
+  const startTime = now.hour() < 5
+    ? now.subtract(1, "day").hour(5).minute(0).second(0)
     : now.hour(5).minute(0).second(0);
   const endTime = startTime.add(24, "hour").subtract(1, "second");
-
-  // === Ambil 3 user dengan sum tertinggi ===
-  const userSnapshot = await getDocs(
-    query(collection(db, "users"), orderBy("sum", "desc"), limit(3))
-  );
-  const topUsers = userSnapshot.docs.map((doc) => ({
-    username: doc.data().username,
-    sum: doc.data().sum,
-  }));
 
   // === Ambil semua leads ===
   const leadSnapshot = await getDocs(
     query(collection(db, "leads"), orderBy("created_at", "desc"))
   );
 
-  // Untuk menyimpan semua leads dan hitung country serta total earning per user
-  const leads: { id: string; userId: string; country: any; useragent: any; ip: any; earning: any; created_at: any; }[] = [];
-  const countryCount: Record<string, number> = {};
+  const leads: {
+    id: string;
+    userId: string;
+    country: any;
+    network: string;
+    useragent: any;
+    ip: any;
+    earning: any;
+    created_at: any;
+  }[] = [];
+
+  const earningPerUser: Record<string, number> = {};
   const topLeadMap: Record<string, number> = {};
+  const countryCount: Record<string, number> = {};
+  const hitungLead: Record<string, number> = {};
 
   leadSnapshot.forEach((doc) => {
     const data = doc.data();
-    if (!data.created_at) return;
+    if (!data.created_at || !data.userId) return;
 
-    const createdAt = data.created_at.toDate();
-    const userId = data.userId;
-    const earning = data.earning || 0;
+    const createdAt = dayjs(data.created_at.toDate()).tz("Asia/Jakarta");
 
-    leads.push({
-      id: doc.id,
-      userId,
-      country: data.country,
-      useragent: data.useragent,
-      ip: data.ip,
-      earning,
-      created_at: createdAt,
-    });
+    if (createdAt.isSameOrAfter(startTime) && createdAt.isSameOrBefore(endTime)) {
+      leads.push({
+        id: doc.id,
+        userId: data.userId,
+        country: data.country,
+        network: data.network,
+        useragent: data.useragent,
+        ip: data.ip,
+        earning: data.earning || 0,
+        created_at: createdAt.toDate(),
+      });
 
-    if (data.country) {
-      countryCount[data.country] = (countryCount[data.country] || 0) + 1;
-    }
+      const userId = data.userId;
+      const earning = data.earning || 0;
+      const country = data.country;
 
-    if (userId) {
+      earningPerUser[userId] = (earningPerUser[userId] || 0) + earning;
       topLeadMap[userId] = (topLeadMap[userId] || 0) + earning;
+      hitungLead[userId] = (hitungLead[userId] || 0) + 1;
+
+      if (country) {
+        countryCount[country] = (countryCount[country] || 0) + 1;
+      }
     }
   });
+
+  const topUsers = Object.entries(earningPerUser)
+    .map(([username, total]) => ({ username, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3);
 
   const topLeads = Object.entries(topLeadMap)
     .map(([name, total]) => ({ name, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
+
+  const topCountry = Object.entries(countryCount)
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count);
 
   // === Ambil 15 klik terakhir ===
   const clickSnapshot = await getDocs(
@@ -89,6 +104,7 @@ export async function fetchDashboardData() {
     return {
       id: doc.id,
       user: data.user,
+      network: data.network,
       country: data.country,
       source: data.source,
       gadget: data.gadget,
@@ -106,6 +122,7 @@ export async function fetchDashboardData() {
     return {
       id: doc.id,
       user: data.user,
+      network: data.network,
       country: data.country,
       source: data.source,
       gadget: data.gadget,
@@ -114,7 +131,7 @@ export async function fetchDashboardData() {
     };
   });
 
-  // === Ambil summary terakhir (optional, bisa dipakai jika perlu) ===
+  // === Ambil summary terakhir ===
   const summarySnapshot = await getDocs(
     query(collection(db, "user_summary"), orderBy("created_at", "desc"), limit(15))
   );
@@ -132,21 +149,6 @@ export async function fetchDashboardData() {
     };
   });
 
-  // === Hitung leads per user dalam rentang 05:00 hari ini - 04:59 besok ===
-const hitungLead: Record<string, number> = {};
-
-leadSnapshot.forEach((doc) => {
-  const data = doc.data();
-  if (!data.created_at || !data.userId) return;
-
-  const createdAt = dayjs(data.created_at.toDate()).tz("Asia/Jakarta");
-
-  if (createdAt.isSameOrAfter(startTime) && createdAt.isSameOrBefore(endTime)) {
-    const userId = data.userId;
-    hitungLead[userId] = (hitungLead[userId] || 0) + 1;
-  }
-});
-
   // === Hitung clicks per user di jam sekarang ===
   const clicksPerUserHour: Record<string, number> = {};
   clicks.forEach((click) => {
@@ -161,12 +163,13 @@ leadSnapshot.forEach((doc) => {
 
   return {
     topUsers,
+    topLeads,
     leads,
     hitungLead,
     clicks,
     liveClicks,
     summary,
     countryData: countryCount,
-    topLeads
+    topCountry,
   };
 }

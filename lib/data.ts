@@ -1,12 +1,4 @@
-import { db } from "./firebase";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from "firebase/firestore";
-
+import { db } from "./firebaseAdmin";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -29,9 +21,8 @@ export async function fetchDashboardData() {
   const endTime = startTime.add(24, "hour").subtract(1, "second");
 
   // === Ambil semua leads ===
-  const leadSnapshot = await getDocs(
-    query(collection(db, "leads"), orderBy("created_at", "desc"))
-  );
+  const leadQuery = db.collection("users").orderBy("created_at", "desc");
+  const leadSnapshot = await leadQuery.get();
 
   const leads: {
     id: string;
@@ -49,7 +40,7 @@ export async function fetchDashboardData() {
   const countryCount: Record<string, number> = {};
   const hitungLead: Record<string, number> = {};
 
-  leadSnapshot.forEach((doc) => {
+  leadSnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     const data = doc.data();
     if (!data.created_at || !data.userId) return;
 
@@ -95,11 +86,10 @@ export async function fetchDashboardData() {
     .map(([country, count]) => ({ country, count }))
     .sort((a, b) => b.count - a.count);
 
-  // === Ambil 15 klik terakhir ===
-  const clickSnapshot = await getDocs(
-    query(collection(db, "clicks"), orderBy("created_at", "desc"), limit(15))
-  );
-  const clicks = clickSnapshot.docs.map((doc) => {
+  // === Ambil 45 klik terakhir ===
+  const clickSnapshot = db.collection("clicks").orderBy("created_at", "desc").orderBy("created_at", "desc").limit(45);
+  const clicksQuery = await clickSnapshot.get();
+  const clicks = clicksQuery.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -114,10 +104,9 @@ export async function fetchDashboardData() {
   });
 
   // === Ambil 15 live clicks terakhir ===
-  const liveClickSnapshot = await getDocs(
-    query(collection(db, "live_clicks"), orderBy("created_at", "desc"), limit(15))
-  );
-  const liveClicks = liveClickSnapshot.docs.map((doc) => {
+  const liveClickSnapshot = db.collection("live_clicks").orderBy("created_at", "desc").orderBy("created_at", "desc").limit(15);
+  const liveClickQuery = await liveClickSnapshot.get();
+  const liveClicks = liveClickQuery.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -132,10 +121,9 @@ export async function fetchDashboardData() {
   });
 
   // === Ambil summary terakhir ===
-  const summarySnapshot = await getDocs(
-    query(collection(db, "user_summary"), orderBy("created_at", "desc"), limit(15))
-  );
-  const summary = summarySnapshot.docs.map((doc) => {
+  const summarySnapshot = db.collection("user_summary").orderBy("created_at", "desc").orderBy("created_at", "desc");
+  const summaryQuery = await summarySnapshot.get();
+  const summary = summaryQuery.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
     const data = doc.data();
     return {
       id: doc.id,
