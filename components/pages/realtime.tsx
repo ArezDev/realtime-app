@@ -6,11 +6,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RealtimeTab } from "./Dashboardtest";
 import { StatsRealtime } from "./stats";
 import { SummaryRealtime } from "./summary";
-import { fetchDashboardData } from "@/lib/data";
-import { fetchLiveClicks } from "@/lib/get_klik";
+//import { fetchDashboardData } from "@/lib/data";
+//import { fetchLiveClicks } from "@/lib/get_klik";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { playAudio } from "@/lib/Notif_lead";
+import axios from "axios";
 
 export default function DashboardPage(props: any) {
   const [dashboardData, setDashboardData] = useState(props);
@@ -26,8 +27,8 @@ export default function DashboardPage(props: any) {
   useEffect(() => {
     // Interval untuk memperbarui data klik secara live
     const interval = setInterval(async () => {
-      const result = await fetchLiveClicks();
-      setDashboardData((prev: any) => ({ ...prev, liveClicks: result.clicks }));
+      const result = await axios.get('/api/live_click');
+      setDashboardData((prev: any) => ({ ...prev, liveClicks: result?.data?.clicks }));
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -36,7 +37,7 @@ export default function DashboardPage(props: any) {
 
     // Inisialisasi data dashboard saat komponen pertama kali dimuat
     async function refreshData() {
-      const newData = await fetchDashboardData();
+      const newData = await axios.get('/api/dashboard');
       setDashboardData(newData);
     }
     refreshData();
@@ -55,7 +56,7 @@ export default function DashboardPage(props: any) {
       setTimeout(async () => {
         //play notif!
           playAudio();
-          const newData = await fetchDashboardData();
+          const newData = await axios.get('/api/dashboard');
           setDashboardData(newData);
       }, 5000); // Delay 5 detik untuk menunggu data terupdate
     });
@@ -63,8 +64,8 @@ export default function DashboardPage(props: any) {
     socket.on("user-klik", async (payload) => {
       console.log(payload);
       setTimeout(async () => {
-        const result = await fetchLiveClicks();
-        setDashboardData((prev: any) => ({ ...prev, liveClicks: result.clicks }));
+        const result = await axios.get('/api/live_click');
+        setDashboardData((prev: any) => ({ ...prev, liveClicks: result?.data?.clicks }));
       }, 5000); // Delay 5 detik untuk menunggu data terupdate
     });
 
