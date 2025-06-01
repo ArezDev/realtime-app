@@ -126,15 +126,26 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   const start = now < today5AM ? addDays(today5AM, -1) : today5AM;
   const end = addDays(start, 1);
 
-  const filteredLeads = data.leads.filter((lead) => {
-    const createdAt = new Date(lead.created_at);
-    return (
-      isAfter(createdAt, start) &&
-      isBefore(createdAt, end) &&
-      lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
-      lead.country.toLowerCase().includes(searchCountry.toLowerCase())
-    );
-  });
+  // const filteredLeads = data.leads.filter((lead) => {
+  //   const createdAt = new Date(lead.created_at);
+  //   return (
+  //     isAfter(createdAt, start) &&
+  //     isBefore(createdAt, end) &&
+  //     lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
+  //     lead.country.toLowerCase().includes(searchCountry.toLowerCase())
+  //   );
+  // });
+
+  const filteredLeads = (data?.leads ?? []).filter((lead) => {
+  const createdAt = new Date(lead.created_at);
+  return (
+    isAfter(createdAt, start) &&
+    isBefore(createdAt, end) &&
+    lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
+    lead.country.toLowerCase().includes(searchCountry.toLowerCase())
+  );
+});
+
 
   const getIPinfo = async (ip: string) => {
     const result = await axios.get(`https://ipwhois.pro/${ip}`, {
@@ -201,10 +212,10 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
         {/* live clicks content */}
         <div className="p-1 pt-0 text-sm">
         <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
-            {[...data.liveClicks]
-            .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
-            .slice(0, 15)
-            .map((click) => (
+            {[...(Array.isArray(data?.liveClicks) ? data.liveClicks : [])]
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .slice(0, 15)
+              .map((click) => (
                 <div
                 key={click.id}
                 className="live-clicks-row animate-pulse flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer"
@@ -365,7 +376,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
             <h2 className="font-mono text-1xl">Top User</h2>
             </div>
           <div className="p-3">
-            {data.topUsers.length === 0 ? (
+            {!Array.isArray(data?.topUsers) || data.topUsers.length === 0 ? (
               <p className="italic text-sm text-gray-500 dark:text-gray-400">No top users found.</p>
             ) : (
               <ul className="space-y-1 mt-1 text-zinc-700 dark:text-zinc-200 font-mono">
@@ -584,7 +595,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Leads</h2>
         </div>
           <CardContent className="p-6">
-            {data.topLeads.length === 0 ? (
+              {!Array.isArray(data?.topLeads) || data.topLeads.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-white-400">No leads available.</p>
             ) : (
               <ul className="font-mono text-1xl space-y-1 text-zinc-700 dark:text-white">
