@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    if (payload.role !== "admin") {
+    if (payload.role !== "uwong") {
       return NextResponse.redirect(new URL("/login_disek", request.url));
     }
 

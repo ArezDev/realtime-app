@@ -15,14 +15,14 @@ export async function POST(req: Request) {
   }
 
   const doc = snapshot.docs[0];
-  const { password: hashedPassword } = doc.data();
+  const { password: hashedPassword, role } = doc.data();
 
   const isValid = await bcrypt.compare(password, hashedPassword);
   if (!isValid) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const token = sign({ role: "admin" }, process.env.JWT_SECRET!, {
+  const token = sign({ role: role }, process.env.JWT_SECRET!, {
     expiresIn: "1d",
   });
 
