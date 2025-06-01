@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   const token = sign({ role: "admin" }, process.env.JWT_SECRET!, {
-    expiresIn: "3m",
+    expiresIn: "1d",
   });
 
   const res = NextResponse.json({ success: true });

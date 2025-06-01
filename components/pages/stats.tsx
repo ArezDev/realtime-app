@@ -95,7 +95,7 @@ export function StatsRealtime({ data }: { data: DashboardData }) {
                     ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={10} /> ) 
                     :
                 click.network.includes('LOSPOLLOS') ? 
-                    ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={17} height={10} /> ) 
+                    ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={20} height={10} /> ) 
                     :
                 click.network.includes('TORAZZO') ? 
                     ( <Image src={'/network/lospollos.png'} alt={"Lospollos"} width={17} height={10} /> ) 

@@ -6,8 +6,8 @@ import Image from "next/image";
 import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
 import { RiSmartphoneLine } from "react-icons/ri";
 import { FcFlashOn } from "react-icons/fc";
-import { useState } from "react";
-import { Clock, Cpu, DollarSign, EarthLock, Globe, MapPin, User, Wifi, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Clock, Cpu, Crown, DollarSign, EarthLock, Globe, MapPin, User, Wifi, X } from "lucide-react";
 import axios from "axios";
 import {
   isAfter,
@@ -49,7 +49,7 @@ interface Lead {
 
 interface User {
   username: string;
-  sum: number;
+  total: number;
 }
 
 interface DashboardData {
@@ -167,6 +167,20 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   const closeInfoLiveClick = () => {
     setIsOpenLiveClick(false);
     setSelectedLiveClick(null);
+  };
+
+  const getCrownIcon = (username: string) => {
+  const index = data.topUsers.findIndex(user => user.username === username);
+    switch (index) {
+      case 0:
+        return <FaCrown className="w-5 h-5 text-yellow-400 animate-bounce" />; // emas
+      case 1:
+        return <FaCrown className="w-4 h-4 text-gray-400" />;   // perak
+      case 2:
+        return <FaCrown className="w-4 h-4 text-orange-400" />; // perunggu
+      default:
+        return null;
+    }
   };
 
   return (
@@ -348,19 +362,19 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           hover:bg-gradient-to-r hover:from-red-100 hover:via-red-50 hover:to-cyan-200
           dark:hover:bg-gradient-to-r dark:hover:from-zinc-900 dark:hover:via-zinc-700 dark:hover:to-zinc-900"
         >
-          <div className="flex items-start justify-start gap-2 mb-6 p-0">
-          <FaCrown className="text-2xl text-orange-500 animate-pulse" />
-          <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top User</h2>
-          </div>
-          <div className="p-6">
+            <div className="flex items-start justify-start gap-2 mb-3 p-0">
+            <FaCrown className="text-2xl text-[#FFD700] animate-pulse" />
+            <h2 className="font-mono text-1xl">Top User</h2>
+            </div>
+          <div className="p-3">
             {data.topUsers.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No top users found.</p>
+              <p className="italic text-sm text-gray-500 dark:text-gray-400">No top users found.</p>
             ) : (
-              <ul className="space-y-1 mt-2 text-zinc-700 dark:text-zinc-200">
+              <ul className="space-y-1 mt-1 text-zinc-700 dark:text-zinc-200 font-mono">
                 {data.topUsers.slice(0, 3).map((user, i) => (
                   <li key={i}>
                     <span className="font-semibold text-blue-500">{i + 1}.</span> {user.username}{" "}
-                    <span className="text-sm text-zinc-500">(${user.sum})</span>
+                    <span className="text-sm text-zinc-500">(${user.total.toFixed(2)})</span>
                   </li>
                 ))}
               </ul>
@@ -391,20 +405,20 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
       dark:border-zinc-600 px-3 py-2 text-sm dark:bg-zinc-800 dark:text-zinc-100 
       focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
-  </div>
+    </div>
 
-    {/* Table */}
+    {/* Table Lead */}
     <div className="overflow-x-auto rounded-xl shadow-md mt-4 border border-zinc-200 dark:border-zinc-700">
         <table className="table-auto min-w-full divide-y divide-zinc-200 dark:divide-zinc-700 text-sm">
             <thead className="bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500 text-white dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">User</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Country</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Network</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap hidden md:table-cell">Source</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Earning</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap">User</th>
+              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Country</th>
+              <th className="px-3 py-1 text-left font-semibold whitespace-nowrap">Network</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">Source</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
+              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Earning</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
             </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
@@ -423,11 +437,14 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                   onClick={() => openModal(lead)}
                 >
                 {/* UserId */}
-                <td className="px-4 py-1 font-serif text-zinc-800 dark:text-zinc-100 whitespace-nowrap">
-                    {lead.userId}
+                <td className="px-2 py-1 font-serif text-zinc-800 dark:text-zinc-100 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    {getCrownIcon(lead.userId)} 
+                    <span>{lead.userId}</span>
+                  </div>
                 </td>
                 {/* Country */}
-                <td className="px-6 py-3 whitespace-nowrap text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                <td className="px-3 py-1 whitespace-nowrap text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
                     <ReactCountryFlag
                     countryCode={lead.country || "XX"}
                     svg
@@ -464,14 +481,14 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     {lead.ip}
                 </td>
                 {/* Earning */}
-                <td className="px-3 py-2 font-mono font-bold text-green-700 dark:text-green-400 whitespace-nowrap text-sm">
+                <td className="px-3 py-1 font-mono font-bold text-green-700 dark:text-green-400 whitespace-nowrap text-sm">
                   <div className="flex items-center space-x-0">
                     <DollarSign className="w-auto h-3 text-green-500" />
                     <span>{lead.earning.toFixed(2)}</span>
                   </div>
                 </td>
                 {/* Time */}
-                <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400 whitespace-nowrap hidden sm:table-cell">
+                <td className="px-4 py-1 text-zinc-600 dark:text-zinc-400 whitespace-nowrap hidden sm:table-cell">
                     <ClientDate date={lead.created_at} />
                 </td>
                 </tr>

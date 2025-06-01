@@ -209,11 +209,11 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
         <table className="table-auto min-w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500">
             <tr className="text-white uppercase text-xs font-semibold tracking-wide">
-              <th className="px-3 py-2">User</th>
-              <th className="px-1 py-2">Clicks</th>
-              <th className="px-1 py-2">CR (%)</th>
-              <th className="px-1 py-2">Leads</th>
-              <th className="px-1 py-2">Earning</th>
+              <th className="px-3 py-1">User</th>
+              <th className="px-1 py-1">Clicks</th>
+              <th className="px-1 py-1">Leads</th>
+              <th className="px-1 py-1">CR (%)</th>
+              <th className="px-1 py-1">Earning</th>
             </tr>
           </thead>
           <tbody>
@@ -234,11 +234,11 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
                         : "bg-cyan-100 dark:bg-zinc-800"
                     } hover:bg-blue-100 dark:hover:bg-blue-900`}
                   >
-                    <td className="px-2 py-2 font-mono">{row.user}</td>
-                    <td className="px-2 py-2 font-mono">{row.total_click}</td>
-                    <td className="px-2 py-2 font-mono">{cr.toFixed(2)}</td>
-                    <td className="px-2 py-2 font-mono">{row.total_leads}</td>
-                    <td className="px-2 py-2 font-mono">
+                    <td className="px-2 py-1 font-mono">{row.user}</td>
+                    <td className="px-2 py-1 font-mono">{row.total_click}</td>
+                    <td className="px-2 py-1 font-mono">{row.total_leads}</td>
+                    <td className="px-2 py-1 font-mono">{cr.toFixed(2)}</td>
+                    <td className="px-2 py-1 font-mono">
                       ${row.total_earning.toFixed(2)}
                     </td>
                   </tr>
