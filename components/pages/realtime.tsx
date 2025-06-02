@@ -18,6 +18,11 @@ export default function DashboardPage(props: any) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  async function refreshData() {
+    const newData = await axios.get('/api/dashboard');
+    setDashboardData(newData?.data);
+  }
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -33,6 +38,7 @@ export default function DashboardPage(props: any) {
     const interval = setInterval(async () => {
       const result = await axios.get('/api/live_click');
       setDashboardData((prev: any) => ({ ...prev, liveClicks: result?.data?.liveClicks }));
+      refreshData();
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -54,13 +60,15 @@ export default function DashboardPage(props: any) {
         //play notif!
           playAudio();
           const newData = await axios.get('/api/dashboard');
-          setDashboardData(newData?.data);
+          //setDashboardData(newData?.data);
+          setDashboardData((prev: any) => ({ ...prev, leads: newData?.data?.leads }));
       }, 5000); // Delay 5 detik untuk menunggu data terupdate
     });
 
     socket.on("user-klik", async (payload) => {
       console.log(payload);
       setTimeout(async () => {
+        refreshData();
         const result = await axios.get('/api/live_click');
         setDashboardData((prev: any) => ({ ...prev, liveClicks: result?.data?.liveClicks }));
       }, 5000); // Delay 5 detik untuk menunggu data terupdate

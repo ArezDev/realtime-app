@@ -126,9 +126,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
     lead.country.toLowerCase().includes(searchCountry.toLowerCase())
   );
-});
-
-
+  });
   const getIPinfo = async (ip: string) => {
     const result = await axios.get(`https://ipwhois.pro/${ip}`, {
       params: { key: "rmpJxy6jV0iWmWZu" },
