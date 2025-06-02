@@ -1,12 +1,5 @@
-import { write } from '@/lib/firebaseAdmin';
-import { db } from '@/lib/firebase';
-import {
-  collection,
-  getDocs,
-  query,
-  where
-} from 'firebase/firestore';
-import { Timestamp as ClientTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebaseAdmin';
+import { Timestamp as ClientTimestamp } from 'firebase-admin/firestore';
 import { NextApiRequest, NextApiResponse } from 'next';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -81,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         network.includes('TF') ? 'LOSPOLLOS' : 
         network;
         
-  const cekUser = await write
+  const cekUser = await db
     .collection('users')
     .where('username', '==', sub)
     .limit(1)
@@ -127,11 +120,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       created_at: now,
     };
 
-    await write.collection('clicks').add(clickPayload);
+    await db.collection('clicks').add(clickPayload);
 
     // Cek apakah summary hari ini untuk user sudah ada
     const summaryDocId = `${userId}_${createdDate}`;
-    const summaryRef = write.collection('user_summary').doc(summaryDocId);
+    const summaryRef = db.collection('user_summary').doc(summaryDocId);
     const summarySnap = await summaryRef.get();
 
     if (summarySnap.exists) {
@@ -146,12 +139,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     } else {
       // Kalau belum ada, hitung earning hari ini
-      const leadsSnap = await getDocs(query(
-        collection(db, "leads"),
-        where("userId", "==", userId),
-        where("created_at", ">=", ClientTimestamp.fromDate(startOfDay)),
-        where("created_at", "<=", ClientTimestamp.fromDate(endOfDay))
-      ));
+      // const leadsSnap = await getDocs(query(
+      //   collection(db, "leads"),
+      //   where("userId", "==", userId),
+      //   where("created_at", ">=", ClientTimestamp.fromDate(startOfDay)),
+      //   where("created_at", "<=", ClientTimestamp.fromDate(endOfDay))
+      // ));
+      const leadsSnap = await db.collection('leads')
+            .where('userId', '==', userId)
+            .where('created_at', '>=', ClientTimestamp.fromDate(startOfDay))
+            .where('created_at', '<=', ClientTimestamp.fromDate(startOfDay))
+            .get();
 
       let earningToday = 0;
       leadsSnap.forEach(doc => {
@@ -175,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Save live click
-    await write.collection('live_clicks').doc(`LiveClick_${userId}_${dayjs(nowJS).format('HHmmss')}`).set({
+    await db.collection('live_clicks').doc(`LiveClick_${userId}_${dayjs(nowJS).format('HHmmss')}`).set({
       ...clickPayload,
       user: userId,
     });

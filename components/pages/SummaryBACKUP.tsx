@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Download, RotateCcw } from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -12,15 +12,17 @@ interface Summary {
   total_earning: number;
   total_click: number;
   created_at: Date;
-  created_date: string;
+  created_date: string; // format YYYY-MM-DD
 }
 
 interface DashboardData {
-  hitungLead: Record<string, number>;
+  hitungLead: any;
   summary: Summary[];
 }
 
 export function SummaryRealtime({ data }: { data: DashboardData }) {
+
+  // Default range: hari ini jam 5 pagi sampai besok jam 5 pagi (WIB)
   const getInitialRange = () => {
     const now = new Date();
     const start = new Date(now);
@@ -44,7 +46,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
   };
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateRange, setDateRange] = useState(getInitialRange());
+  const [dateRange, setDateRange] = useState(getInitialRange);
   const [searchUser, setSearchUser] = useState("");
 
   const formatDate = (d: Date) =>
@@ -55,48 +57,45 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
   const startDateStr = formatDate(dateRange[0].startDate);
   const endDateStr = formatDate(dateRange[0].endDate);
 
-  const filteredSummary = useMemo(() => {
-    return (data?.summary ?? []).filter((item) => {
-      const created = item.created_at instanceof Date
-        ? item.created_at
-        : new Date(item.created_at);
-      return (
-        created >= dateRange[0].startDate &&
-        created < dateRange[0].endDate &&
-        item.user.toLowerCase().includes(searchUser.toLowerCase().trim())
-      );
-    });
-  }, [data?.summary, dateRange, searchUser]);
+  console.log(data)
 
-  const groupedSummary = useMemo(() => {
-    return Object.values(
-      filteredSummary.reduce<Record<string, Summary & { total_leads: number }>>(
-        (acc, item) => {
-          const user = item.user;
-          if (!acc[user]) {
-            acc[user] = {
-              ...item,
+  // Filter data berdasarkan tanggal dan pencarian user
+  const filteredSummary = (data?.summary ?? []).filter((item) => {
+    return (
+      item.created_at >= dateRange[0].startDate &&
+      item.created_at < dateRange[0].endDate &&
+      item.user.toLowerCase().includes(searchUser.toLowerCase().trim())
+    );
+  });
+
+
+  const groupedSummary = Object.values(
+    filteredSummary.reduce<Record<string, Summary & { total_leads: number }>>(
+      (acc, item) => {
+        if (!acc[item.user]) {
+          acc[item.user] = { 
+              ...item, 
               total_click: item.total_click,
               total_earning: item.total_earning,
-              total_leads: data?.hitungLead?.[user] ?? 0,
-            };
-          } else {
-            acc[user].total_click += item.total_click;
-            acc[user].total_earning += item.total_earning;
-            // total_leads tidak dijumlahkan ulang karena sudah dihitung dari luar
-          }
-          return acc;
-        },
-        {}
-      )
-    );
-  }, [filteredSummary, data?.hitungLead]);
+              total_leads: data?.hitungLead[item.user] || 0,
+          };
+        } else {
+          acc[item.user].total_click += item.total_click;
+          acc[item.user].total_earning += item.total_earning;
+          acc[item.user].total_leads! += 0;
+        }
+        return acc;
+      },
+      {}
+    )
+  );
 
   const resetFilters = () => {
     setDateRange(getInitialRange());
     setSearchUser("");
   };
 
+  // Export grouped data ke CSV
   const handleExport = () => {
     const csvContent = [
       ["User", "Leads", "CR (%)", "Clicks", "Earning"],
@@ -113,7 +112,9 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
           `$${row.total_earning.toFixed(2)}`,
         ];
       }),
-    ].map((e) => e.join(",")).join("\n");
+    ]
+      .map((e) => e.join(","))
+      .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -221,6 +222,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
           <tbody>
             {groupedSummary.length ? (
               groupedSummary.map((row, i) => {
+
                 const cr =
                   row.total_click > 0
                     ? (row.total_earning / row.total_click) * 100
@@ -228,7 +230,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
 
                 return (
                   <tr
-                    key={`summary-${row.user}`}
+                    key={row.id}
                     className={`transition-colors duration-200 ${
                       i % 2 === 0
                         ? "bg-cyan-50 dark:bg-zinc-900"
@@ -239,7 +241,9 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
                     <td className="px-2 py-1 font-mono">{row.total_click}</td>
                     <td className="px-2 py-1 font-mono">{row.total_leads}</td>
                     <td className="px-2 py-1 font-mono">{cr.toFixed(2)}</td>
-                    <td className="px-2 py-1 font-mono">${row.total_earning.toFixed(2)}</td>
+                    <td className="px-2 py-1 font-mono">
+                      ${row.total_earning.toFixed(2)}
+                    </td>
                   </tr>
                 );
               })

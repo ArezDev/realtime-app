@@ -2,10 +2,10 @@ import { db } from "./firebaseAdmin";
 
 export async function fetchLiveClicks() {
   // Fetch all klik, sorted by newest first
-  const getClicks = db.collection("clicks").orderBy("created_at", "desc");
+  const getClicks = db.collection("live_clicks").orderBy("created_at", "desc");
   const getClicksQuery = await getClicks.get();
 
-  const clicks: {
+  const liveClicks: {
     id: string;
     user: string;
     network: string;
@@ -18,7 +18,7 @@ export async function fetchLiveClicks() {
 
   getClicksQuery.forEach((doc) => {
     const data = doc.data();
-    clicks.push({
+    liveClicks.push({
       id: doc.id,
       user: data.user,
       network: data.network,
@@ -31,6 +31,6 @@ export async function fetchLiveClicks() {
   });
 
   return {
-    clicks,
+    liveClicks,
   };
 }

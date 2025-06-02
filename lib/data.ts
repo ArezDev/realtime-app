@@ -21,7 +21,7 @@ export async function fetchDashboardData() {
   const endTime = startTime.add(24, "hour").subtract(1, "second");
 
   // === Ambil semua leads ===
-  const leadQuery = db.collection("users").orderBy("created_at", "desc");
+  const leadQuery = db.collection("leads").orderBy("created_at", "desc");
   const leadSnapshot = await leadQuery.get();
 
   const leads: {
