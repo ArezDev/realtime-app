@@ -405,8 +405,8 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
               <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Country</th>
               <th className="px-3 py-1 text-left font-semibold whitespace-nowrap">Network</th>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">Source</th>
-              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
               <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Earning</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
             </tr>
             </thead>
@@ -459,15 +459,11 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 </td>
                 {/* Source */}
                 <td className="px-6 py-1 text-2xl whitespace-nowrap hidden md:table-cell">
-                    {lead.useragent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/g) ? (
+                    {lead.useragent.includes('WAP') ? (
                     <RiSmartphoneLine />
                     ) : (
                     <FaComputer />
                     )}
-                </td>
-                {/* IP Address */}
-                <td className="px-4 py-1 font-mono text-zinc-800 dark:text-zinc-100 whitespace-nowrap hidden md:table-cell">
-                    {lead.ip}
                 </td>
                 {/* Earning */}
                 <td className="px-3 py-1 font-mono font-bold text-green-700 dark:text-green-400 whitespace-nowrap text-sm">
@@ -491,6 +487,10 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     <DollarSign className="w-auto h-3 text-green-500" />
                     <span>{lead.earning.toFixed(2)}</span>
                   </div>
+                </td>
+                {/* IP Address */}
+                <td className="px-4 py-1 font-mono text-zinc-800 dark:text-zinc-100 whitespace-nowrap hidden md:table-cell">
+                    {lead.ip}
                 </td>
                 {/* Time */}
                 <td className="px-4 py-1 text-zinc-600 dark:text-zinc-400 whitespace-nowrap hidden sm:table-cell">
