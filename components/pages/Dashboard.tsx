@@ -129,7 +129,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   });
   const getIPinfo = async (ip: string) => {
     const result = await axios.get(`https://ipwhois.pro/${ip}`, {
-      params: { key: "rmpJxy6jV0iWmWZu" },
+      params: { key: "4OehYgGBlw8CpI5x" },
     });
     if (result?.data) {
       setWhatIsMyIP(result.data);
@@ -523,7 +523,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
             </button>
             {/* Title */}
             <h2 className="flex items-center text-1xl font-mono mb-6 text-zinc-900 dark:text-white text-left">
-              <FcFlashOn className="mr-2 text-2xl" /> INFORMASI LEAD {whatIsMyIP?.country}
+              <FcFlashOn className="mr-2 text-2xl" /> LEAD {whatIsMyIP?.country}
             </h2>
             {/* Details list */}
             <div className="space-y-4 text-zinc-700 dark:text-zinc-300 text-sm">
