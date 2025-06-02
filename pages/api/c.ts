@@ -1,5 +1,4 @@
 import { db } from '@/lib/firebaseAdmin';
-import { Timestamp as ClientTimestamp } from 'firebase-admin/firestore';
 import { NextApiRequest, NextApiResponse } from 'next';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -38,13 +37,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const createdWeek = dayjs(nowJS).startOf('week').format('YYYY-MM-DD');
   const startOfDay = dayjs(nowJS).startOf('day').toDate();
   const endOfDay = dayjs(nowJS).endOf('day').toDate();
-
-  //const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || '';
-  const ip = req.socket.remoteAddress;
+  let whatsCountry = '';
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || '';
   const userAgent = req.headers["user-agent"] || "Unknown";
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   const getCountry = async ()  => {
-    let whatsCountry = '';
     try {
       const result = await axios.get(`https://ipwhois.pro/${ip}`, {
         params: {
@@ -139,17 +136,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     } else {
       // Kalau belum ada, hitung earning hari ini
-      // const leadsSnap = await getDocs(query(
-      //   collection(db, "leads"),
-      //   where("userId", "==", userId),
-      //   where("created_at", ">=", ClientTimestamp.fromDate(startOfDay)),
-      //   where("created_at", "<=", ClientTimestamp.fromDate(endOfDay))
-      // ));
-      const leadsSnap = await db.collection('leads')
-            .where('userId', '==', userId)
-            .where('created_at', '>=', ClientTimestamp.fromDate(startOfDay))
-            .where('created_at', '<=', ClientTimestamp.fromDate(startOfDay))
-            .get();
+      const leadsSnap = await db.collection("leads")
+        .where("userId", "==", userId)
+        .where("created_at", ">=", Timestamp.fromDate(startOfDay))
+        .where("created_at", "<=", Timestamp.fromDate(endOfDay))
+        .get();
 
       let earningToday = 0;
       leadsSnap.forEach(doc => {
@@ -179,7 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json({
-      data: encoded,
+      clickId: encoded,
       status: 'OK',
       message: 'Click successfully tracked!',
     });
