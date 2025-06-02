@@ -1,23 +1,20 @@
-"use client";
-
 import { Card, CardContent } from "@/components/ui/card";
+import TopCountryChart from "../chart/TopCountryChart";
 import ReactCountryFlag from "react-country-flag";
 import Image from "next/image";
-import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
-import { RiSmartphoneLine } from "react-icons/ri";
-import { FcFlashOn, FcInfo } from "react-icons/fc";
-import TopCountryChart from "@/components/chart/TopCountryChart";
-import { ClientDate } from "./clientDate";
-import InfoRealtime from "./quoteRealtime";
-import { useState } from "react";
-import { Clock, Cpu, DollarSign, EarthLock, MapPin, User, Wifi, X } from "lucide-react";
 import axios from "axios";
+import { RiSmartphoneLine } from "react-icons/ri";
+import { FcFlashOn } from "react-icons/fc";
+import { useState } from "react";
+import { ClientDate } from "./clientDate";
+import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
 import { isAfter, isBefore, setHours, setMinutes, setSeconds, addDays } from "date-fns";
+import { Clock, Cpu, DollarSign, EarthLock, Globe, MapPin, User, Wifi, X } from "lucide-react";
 
-// Types
 interface Click {
   id: string;
   user: string;
+  network: string;
   country: string;
   source: string;
   gadget: string;
@@ -33,6 +30,7 @@ interface TopLead {
 interface Lead {
   id: string;
   userId: string;
+  network: string;
   country: string;
   useragent: string;
   ip: string;
@@ -42,7 +40,7 @@ interface Lead {
 
 interface User {
   username: string;
-  sum: number;
+  total: number;
 }
 
 interface DashboardData {
@@ -54,7 +52,6 @@ interface DashboardData {
   topLeads: TopLead[];
 }
 
-//cek info!
 interface IPInfo {
   ip: string;
   success: boolean;
@@ -109,7 +106,6 @@ interface IPInfo {
 }
 
 export function RealtimeTab({ data }: { data: DashboardData }) {
-
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLiveClick, setSelectedLiveClick] = useState<Click | null>(null);
@@ -117,42 +113,29 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   const [whatIsMyIP, setWhatIsMyIP] = useState<IPInfo | null>(null);
   const [searchUser, setSearchUser] = useState("");
   const [searchCountry, setSearchCountry] = useState("");
-  
+
   const now = new Date();
-
-  // Hitung jam 05:00 pagi hari ini
   const today5AM = setSeconds(setMinutes(setHours(new Date(), 5), 0), 0);
-
-  // Hitung jam 05:00 pagi keesokan harinya
-  const tomorrow5AM = addDays(today5AM, 1);
-
-  // Jika sekarang sebelum jam 5 pagi, maka kita ambil dari jam 5 pagi kemarin
   const start = now < today5AM ? addDays(today5AM, -1) : today5AM;
   const end = addDays(start, 1);
+  const filteredLeads = (data?.leads ?? []).filter((lead) => {
+  const createdAt = new Date(lead.created_at);
+  return (
+    isAfter(createdAt, start) &&
+    isBefore(createdAt, end) &&
+    lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
+    lead.country.toLowerCase().includes(searchCountry.toLowerCase())
+  );
+});
 
-  // Filtering leads dalam range jam 5 pagi hingga 5 pagi keesokan hari
-  const filteredLeads = data.leads.filter((lead) => {
-    const createdAt = new Date(lead.created_at);
-    return (
-      isAfter(createdAt, start) && isBefore(createdAt, end) &&
-      lead.userId.toLowerCase().includes(searchUser.toLowerCase()) &&
-      lead.country.toLowerCase().includes(searchCountry.toLowerCase())
-    );
-  });
 
-  const getIPinfo = async (ip : string) => {
-
-    await axios.get(`https://ipwhois.pro/${ip}`,{
-      params: {
-        key: 'rmpJxy6jV0iWmWZu'
-      }
-    }).then((result)=>{
-      //console.log(result);
-      if (result && result.data) {
-        setWhatIsMyIP(result.data);
-      }
+  const getIPinfo = async (ip: string) => {
+    const result = await axios.get(`https://ipwhois.pro/${ip}`, {
+      params: { key: "rmpJxy6jV0iWmWZu" },
     });
-
+    if (result?.data) {
+      setWhatIsMyIP(result.data);
+    }
   };
 
   const openModal = (lead: Lead) => {
@@ -177,6 +160,20 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     setSelectedLiveClick(null);
   };
 
+  const getCrownIcon = (username: string) => {
+  const index = data.topUsers.findIndex(user => user.username === username);
+    switch (index) {
+      case 0:
+        return <FaCrown className="w-5 h-5 text-yellow-400 animate-bounce" />; // emas
+      case 1:
+        return <FaCrown className="w-4 h-4 text-gray-400" />;   // perak
+      case 2:
+        return <FaCrown className="w-4 h-4 text-orange-400" />; // perunggu
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="pt-0 space-y-6">
       {/* Live Clicks & Top Users */}
@@ -189,153 +186,164 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           dark:hover:bg-gradient-to-r dark:hover:from-zinc-900 dark:hover:via-zinc-700 dark:hover:to-zinc-900
           max-h-[400px] overflow-auto"
         >
-          <div className="flex items-start justify-start gap-2 mb-6 p-0">
-          <FaArrowPointer className="text-2xl text-blue-500 animate-pulse" />
-          <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Live Clicks</h2>
-          </div>
+        <div className="flex items-start justify-start gap-2 mb-6 p-0">
+        <FaArrowPointer className="text-2xl text-blue-500 animate-pulse" />
+        <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Live Clicks</h2>
+        </div>
 
-          {/* live clicks content */}
-          <div className="p-4 pt-0">
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {[...data.liveClicks]
-                .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
-                .slice(0, 15)
-                .map((click) => (
-                  <div
-                    key={click.id}
-                    className="live-clicks-row animate-pulse flex flex-wrap items-center gap-x-2 gap-y-1"
-                    onClick={()=>showLiveCLicksInfo(click)}
-                  >
-                    {/* Flag */}
-                    <div className="flex-shrink-0 w-7">
-                      <ReactCountryFlag
-                        countryCode={click.country || "XX"}
-                        svg
-                        style={{
-                          width: "auto",
-                          height: "1.2rem",
-                          borderRadius: "3px",
-                          boxShadow: "0 0 2px rgba(0,0,0,0.15)",
-                        }}
-                        title={click.country}
-                      />
-                    </div>
-
-                    {/* User */}
-                    <div className="flex-grow font-mono text-cyan-500 dark:text-teal-300 text-sm truncate max-w-[100px]">
-                      {click.user}
-                    </div>
-
-                    {/* Device Icon */}
-                    <div className="flex-shrink-0 w-6 text-lg">
-                      {click.source.match(
-                        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
-                      ) ? (
-                        <RiSmartphoneLine />
-                      ) : (
-                        <FaComputer />
-                      )}
-                    </div>
-
-                    {/* IP */}
-                    <div className="flex-grow font-serif text-zinc-600 dark:text-teal-300 text-xs truncate max-w-[110px]">
-                      {click.ip}
-                    </div>
-
-                    {/* Browser Icon */}
-                    <div className="flex-shrink-0 w-6 text-center text-2xl text-zinc-500 px-1">
-                      {click.gadget.includes("chrome") && (
-                        <Image src={"/safari.svg"} alt="Browser Icon" width={20} height={20} />
-                      )}
-                    </div>
-                  </div>
-                ))}
-            </div>
-
-            {/* show live click when clicked! */}
-            {isOpenLiveClick && selectedLiveClick && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-                <div 
-                  className="
-                  bg-white dark:bg-zinc-900 rounded-3xl shadow-xl 
-                    max-w-sm w-full p-6 relative animate-fade-in-scale
-                    mx-6 sm:mx-auto sm:max-w-md
-                    max-h-[90vh] overflow-auto"
-                  style={{ animationTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+        {/* live clicks content */}
+        <div className="p-1 pt-0 text-sm">
+        <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
+            {[...(Array.isArray(data?.liveClicks) ? data.liveClicks : [])]
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .slice(0, 15)
+              .map((click) => (
+                <div
+                key={click.id}
+                className="live-clicks-row animate-pulse flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer"
+                onClick={() => showLiveCLicksInfo(click)}
                 >
-                  {/* Close button */}
-                  <button
-                    onClick={closeInfoLiveClick}
-                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                    aria-label="Close modal"
-                  >
-                    <X className="w-5 h-5 text-red-600 dark:text-zinc-300" />
-                  </button>
-
-                  {/* Information Dialog */}
-                  <h2 className="text-1xl font-mono mb-6 text-zinc-900 dark:text-white flex items-center gap-2">
-                    <FcFlashOn />
-                    Click: {whatIsMyIP?.country}
-                  </h2>
-
-                  {/* Details list */}
-                  <div className="space-y-4 text-zinc-700 dark:text-zinc-300 text-sm">
-                    {/* User */}
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-blue-500" />
-                      <span className="font-semibold">
-                        {selectedLiveClick?.user}
-                      </span>
-                    </div>
-                    
-                    {/* IP */}
-                    <div className="flex items-center space-x-2">
-                      <Wifi className="w-4 h-4 text-green-500" />
-                      {/* <strong>IP Address:</strong> */}
-                      <span className="font-mono">
-                        {selectedLiveClick.ip}
-                      </span>
-                    </div>
-
-                    {/* Device */}
-                    <div className="flex items-center space-x-2">
-                      <Cpu className="w-4 h-4 text-indigo-500" />
-                      {/* <strong>Device:</strong> */}
-                      <span className="font-serif">
-                        {selectedLiveClick.gadget.toUpperCase()}
-                      </span>
-                    </div>
-
-                    {/* Full info */}
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-red-500" />
-                      <span className="font-mono text-wrap">
-                      {whatIsMyIP?.city}, {whatIsMyIP?.region}, {whatIsMyIP?.postal}
-                      </span>
-                    </div>
-
-                    {/* Koneksi? */}
-                    <div className="flex items-center space-x-2">
-                      <EarthLock className="w-4 h-4 text-red-500" />
-                      <span>
-                        {whatIsMyIP?.connection.isp}
-                      </span>
-                    </div>
-
-                    {/* UA */}
-                    <div className="flex items-center space-x-2 text-wrap">
-                      <span className="font-mono">
-                        {/* <Eye className="w-4 h-auto text-purple-500" /> */}
-                         {selectedLiveClick.source}
-                      </span>
-                    </div>
-                  </div>
-
+                {/* Flag */}
+                <div className="flex-shrink-0 w-5">
+                    <ReactCountryFlag
+                    countryCode={click.country || "XX"}
+                    svg
+                    style={{
+                        width: "auto",
+                        height: "1.2rem",
+                        borderRadius: "3px",
+                        boxShadow: "0 0 2px rgba(0,0,0,0.15)",
+                    }}
+                    title={click.country}
+                    />
                 </div>
-              </div>
-            )}
 
-          </div>
+                {/* User */}
+                <div className="flex-grow min-w-[60px] max-w-[130px] font-mono text-cyan-500 dark:text-teal-300 text-sm break-words">
+                    {click.user}
+                </div>
+
+                {/* Device Icon */}
+                <div className="flex-shrink-0 w-6 text-lg flex justify-center items-center text-zinc-600 dark:text-teal-300">
+                    {click.source.match(
+                    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
+                    ) ? (
+                    <RiSmartphoneLine />
+                    ) : (
+                    <FaComputer />
+                    )}
+                </div>
+
+                {/* IP */}
+                <div className="flex-grow min-w-[90px] max-w-[150px] font-serif text-zinc-600 dark:text-teal-300 text-xs break-words">
+                    {click.ip}
+                </div>
+
+                {/* Network Icon */}
+                <div className="flex-shrink-0 w-4 text-center text-sm">
+                    {
+                    click.network.includes('IMONETIZEIT') ? 
+                       ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={10} /> ) 
+                       :
+                   click.network.includes('LOSPOLLOS') ? 
+                       ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={17} height={10} /> ) 
+                       :
+                   click.network.includes('TORAZZO') ? 
+                       ( <Image src={'/network/lospollos.png'} alt={"Lospollos"} width={17} height={10} /> ) 
+                       : (
+                           <Globe />
+                       ) 
+                   }
+                </div>
+
+                {/* Browser Icon */}
+                <div className="flex-shrink-0 w-4 text-center text-sm">
+                    {
+                    click.gadget.includes("facebook") ? ( <Image src={'fb.svg'} width={50} height={50} alt={"facebook"} /> )
+                    :
+                    click.gadget.includes("instagram") ? ( <Image src={'ig.svg'} width={50} height={50} alt={"instagram"} /> )
+                    :
+                    click.gadget.includes("chrome") ? ( <Image src={'chrome.svg'} width={50} height={50} alt={"chrome"} /> )
+                    :
+                    click.gadget.includes("safari") ? ( <Image src={'safari.svg'} width={50} height={50} alt={"safari"} /> )
+                    :
+                    (<Globe />)
+                    }
+                </div>
+
+              </div>
+            ))}
+        </div>
+
+        {/* showed click when opened */}
+        {isOpenLiveClick && selectedLiveClick && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm p-4 sm:p-6">
+            <div
+                className="
+                bg-white dark:bg-zinc-900 rounded-3xl shadow-xl
+                max-w-sm w-full p-6 relative animate-fade-in-scale
+                max-h-[90vh] overflow-y-auto
+                "
+                style={{ animationTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+            >
+                {/* Close button */}
+                <button
+                onClick={closeInfoLiveClick}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                aria-label="Close modal"
+                >
+                <X className="w-5 h-5 text-red-600 dark:text-zinc-300" />
+                </button>
+
+                {/* Information Dialog */}
+                <h2 className="text-xl font-mono mb-6 text-zinc-900 dark:text-white flex items-center gap-2">
+                <FcFlashOn />
+                Click: {whatIsMyIP?.country}
+                </h2>
+
+                {/* Details list */}
+                <div className="space-y-4 text-zinc-700 dark:text-zinc-300 text-sm">
+                {/* User */}
+                <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-blue-500" />
+                    <span className="font-semibold break-words">{selectedLiveClick?.user}</span>
+                </div>
+
+                {/* IP */}
+                <div className="flex items-center space-x-2">
+                    <Wifi className="w-4 h-4 text-green-500" />
+                    <span className="font-mono break-words">{selectedLiveClick.ip}</span>
+                </div>
+
+                {/* Device */}
+                <div className="flex items-center space-x-2">
+                    <Cpu className="w-4 h-4 text-indigo-500" />
+                    <span className="font-serif break-words">{selectedLiveClick.gadget.toUpperCase()}</span>
+                </div>
+
+                {/* Full info */}
+                <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-red-500" />
+                    <span className="font-mono break-words">
+                    {whatIsMyIP?.city}, {whatIsMyIP?.region}, {whatIsMyIP?.postal}
+                    </span>
+                </div>
+
+                {/* ISP */}
+                <div className="flex items-center space-x-2">
+                    <EarthLock className="w-4 h-4 text-red-500" />
+                    <span className="break-words">{whatIsMyIP?.connection.isp}</span>
+                </div>
+
+                {/* User Agent */}
+                <div className="flex items-center space-x-2">
+                    <span className="font-mono break-words">{selectedLiveClick.source}</span>
+                </div>
+                </div>
+            </div>
+            </div>
+        )}
+        </div>
         </Card>
 
         {/* Top Users */}
@@ -345,19 +353,19 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           hover:bg-gradient-to-r hover:from-red-100 hover:via-red-50 hover:to-cyan-200
           dark:hover:bg-gradient-to-r dark:hover:from-zinc-900 dark:hover:via-zinc-700 dark:hover:to-zinc-900"
         >
-          <div className="flex items-start justify-start gap-2 mb-6 p-0">
-          <FaCrown className="text-2xl text-orange-500 animate-pulse" />
-          <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top User</h2>
-          </div>
-          <div className="p-6">
-            {data.topUsers.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No top users found.</p>
+            <div className="flex items-start justify-start gap-2 mb-3 p-0">
+            <FaCrown className="text-2xl text-[#FFD700] animate-pulse" />
+            <h2 className="font-mono text-1xl">Top User</h2>
+            </div>
+          <div className="p-3">
+            {!Array.isArray(data?.topUsers) || data.topUsers.length === 0 ? (
+              <p className="italic text-sm text-gray-500 dark:text-gray-400">No top users found.</p>
             ) : (
-              <ul className="space-y-1 mt-2 text-zinc-700 dark:text-zinc-200">
+              <ul className="space-y-1 mt-1 text-zinc-700 dark:text-zinc-200 font-mono">
                 {data.topUsers.slice(0, 3).map((user, i) => (
                   <li key={i}>
                     <span className="font-semibold text-blue-500">{i + 1}.</span> {user.username}{" "}
-                    <span className="text-sm text-zinc-500">(${user.sum})</span>
+                    <span className="text-sm text-zinc-500">(${user.total.toFixed(2)})</span>
                   </li>
                 ))}
               </ul>
@@ -388,19 +396,20 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
       dark:border-zinc-600 px-3 py-2 text-sm dark:bg-zinc-800 dark:text-zinc-100 
       focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
-  </div>
+    </div>
 
-    {/* Table */}
+    {/* Table Lead */}
     <div className="overflow-x-auto rounded-xl shadow-md mt-4 border border-zinc-200 dark:border-zinc-700">
         <table className="table-auto min-w-full divide-y divide-zinc-200 dark:divide-zinc-700 text-sm">
             <thead className="bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500 text-white dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">User</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Country</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Source</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap">Earning</th>
-              <th className="px-4 py-2 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap">User</th>
+              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Country</th>
+              <th className="px-3 py-1 text-left font-semibold whitespace-nowrap">Network</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">Source</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
+              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Earning</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
             </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
@@ -419,11 +428,14 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                   onClick={() => openModal(lead)}
                 >
                 {/* UserId */}
-                <td className="px-4 py-1 font-serif text-zinc-800 dark:text-zinc-100 whitespace-nowrap">
-                    {lead.userId}
+                <td className="px-2 py-1 font-serif text-zinc-800 dark:text-zinc-100 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    {getCrownIcon(lead.userId)} 
+                    <span>{lead.userId}</span>
+                  </div>
                 </td>
                 {/* Country */}
-                <td className="px-4 py-2 whitespace-nowrap text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                <td className="px-3 py-1 whitespace-nowrap text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
                     <ReactCountryFlag
                     countryCode={lead.country || "XX"}
                     svg
@@ -432,8 +444,23 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     />
                     <span className="hidden sm:inline">{lead.country}</span>
                 </td>
+                {/* Network */}
+                <td className="px-7 py-1 text-1xl whitespace-nowrap text-zinc-800 dark:text-zinc-100">
+                {lead.network.includes('IMONETIZEIT') ? 
+                    ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={10} /> ) 
+                    :
+                lead.network.includes('LOSPOLLOS') ? 
+                    ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={21} height={10} /> ) 
+                    :
+                lead.network.includes('TORAZZO') ? 
+                    ( <Image src={'/network/lospollos.png'} alt={"Lospollos"} width={17} height={10} /> ) 
+                    : (
+                        <Globe />
+                    ) 
+                }
+                </td>
                 {/* Source */}
-                <td className="px-6 py-1 text-2xl whitespace-nowrap">
+                <td className="px-6 py-1 text-2xl whitespace-nowrap hidden md:table-cell">
                     {lead.useragent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/g) ? (
                     <RiSmartphoneLine />
                     ) : (
@@ -441,18 +468,34 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     )}
                 </td>
                 {/* IP Address */}
-                <td className="px-4 py-1 font-mono text-zinc-800 dark:text-zinc-100 whitespace-nowrap  hidden md:table-cell">
+                <td className="px-4 py-1 font-mono text-zinc-800 dark:text-zinc-100 whitespace-nowrap hidden md:table-cell">
                     {lead.ip}
                 </td>
                 {/* Earning */}
-                <td className="px-3 py-2 font-mono font-bold text-green-700 dark:text-green-400 whitespace-nowrap text-sm">
-                  <div className="flex items-center space-x-0">
+                <td className="px-3 py-1 font-mono font-bold text-green-700 dark:text-green-400 whitespace-nowrap text-sm">
+                  <div className="flex items-center space-x-1">
+                  {/* EarningBadge */}
+                    {lead.earning >= 40 ? (
+                      <span className="animate-bounce inline-block bg-yellow-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                        EPIC
+                      </span>
+                    ) : lead.earning >= 20 ? (
+                      <span className="animate-bounce inline-block bg-green-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                        HOT
+                      </span>
+                    ) : lead.earning >= 7 ? (
+                      <span className="animate-bounce inline-block bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                        OK
+                      </span>
+                    ) : (
+                      ""
+                    )}
                     <DollarSign className="w-auto h-3 text-green-500" />
                     <span>{lead.earning.toFixed(2)}</span>
                   </div>
                 </td>
                 {/* Time */}
-                <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400 whitespace-nowrap hidden sm:table-cell">
+                <td className="px-4 py-1 text-zinc-600 dark:text-zinc-400 whitespace-nowrap hidden sm:table-cell">
                     <ClientDate date={lead.created_at} />
                 </td>
                 </tr>
@@ -550,7 +593,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Leads</h2>
         </div>
           <CardContent className="p-6">
-            {data.topLeads.length === 0 ? (
+              {!Array.isArray(data?.topLeads) || data.topLeads.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-white-400">No leads available.</p>
             ) : (
               <ul className="font-mono text-1xl space-y-1 text-zinc-700 dark:text-white">
@@ -564,7 +607,6 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           </CardContent>
         </Card>
       </div>
-      
     </div>
   );
 }

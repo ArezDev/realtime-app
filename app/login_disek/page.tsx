@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { initAudio } from '@/lib/Notif_lead';
+import Swal from 'sweetalert2';
+import { FaArrowRight, FaKey } from "react-icons/fa6";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -12,33 +14,65 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     initAudio();
     e.preventDefault();
+
     try {
-     const res = await axios.post("/api/login", { password });
-     if (res.data?.success === true) {
-        console.log('sukses login');
-        router.push("/");
-     }
+      const res = await axios.post("/api/login", { password });
+      if (res.data?.success === true) {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil',
+        text: 'Anda berhasil login!',
+        timer: 500,
+        showConfirmButton: false,
+      });
+      router.push("/");
+      }
     } catch (err: any) {
-      console.log(err?.response?.data?.error)
-      const errorMessage = err?.response?.data?.error || err.message || "Login failed";
-      setError(errorMessage);
+      const errorMessage = err?.response?.data?.error || err.message || "Login gagal";
+      await Swal.fire({
+        icon: 'error',
+        title: 'Server Error!',
+        text: 'Your IP Address has been blocked!',
+        theme: 'auto',
+      });
+      //setError(errorMessage);
       return;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-sm space-y-4"
+    >
+      <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-white">
+        
+      </h2>
+
       <input
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="Enter password"
-        className="border p-2 rounded w-full"
+        placeholder="password ?"
+        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      {error && <p className="text-red-500">{error}</p>}
-      <button type="submit" className="bg-blue-600 text-white p-2 rounded w-full">
-        Login
+
+      {error && (
+        <p className="text-sm text-red-500 text-center">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-200 flex items-center justify-center space-x-2"
+      >
+        <span>OPEN</span>
+        <FaKey />
       </button>
+
     </form>
+  </div>
   );
 }

@@ -1,13 +1,11 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { RealtimeTab } from "./Dashboardtest";
-import { StatsRealtime } from "./stats";
-import { SummaryRealtime } from "./summary";
-//import { fetchDashboardData } from "@/lib/data";
-//import { fetchLiveClicks } from "@/lib/get_klik";
+import { RealtimeTab } from "./Dashboard";
+import { StatsRealtime } from "./Stats";
+import { SummaryRealtime } from "./Summary";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { playAudio } from "@/lib/Notif_lead";
