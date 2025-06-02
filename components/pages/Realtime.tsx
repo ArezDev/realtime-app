@@ -187,7 +187,7 @@ export default function DashboardPage(props: any) {
         </Tabs>
 
         <footer className="border-t border-zinc-200 dark:border-zinc-700 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Powered by <span className="font-semibold text-zinc-700 dark:text-zinc-200">- ZDEV</span>
+          Powered by <span className="font-semibold text-zinc-700 dark:text-zinc-200">- BalaneSöhib</span>
         </footer>
       </div>
     </div>
