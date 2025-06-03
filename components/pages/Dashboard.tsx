@@ -271,7 +271,11 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     :
                     click.gadget.includes("safari") ? ( <Image src={'safari.svg'} width={50} height={50} alt={"safari"} /> )
                     :
-                    (<Globe />)
+                    click.gadget.includes("firefox") ? ( <Image src={'firefox.svg'} width={50} height={50} alt={"firefox"} /> )
+                    :
+                    click.gadget.includes("edge") ? ( <Image src={'edge.svg'} width={50} height={50} alt={"edge"} /> )
+                    :
+                    (<Image src={'default.svg'} width={50} height={50} alt={"default"} />)
                     }
                 </div>
 

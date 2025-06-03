@@ -92,8 +92,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     : userAgent.includes("/FBIOS") ? "facebook"
     : userAgent.includes(";FBAV") ? "facebook"
     : userAgent.includes(";FBDV") ? "facebook"
+    : userAgent.includes("Edg/") ? "edge"
     : userAgent.includes("Chrome") ? "chrome"
     : userAgent.includes("Safari") ? "safari"
+    : userAgent.includes("Firefox") ? "firefox"
     : "default";
 
   const gadget = isMobile ? 'WAP' : 'WEB';
