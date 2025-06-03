@@ -506,6 +506,23 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
               ))
             )}
             </tbody>
+            <tfoot>
+            <tr>
+              <td
+                colSpan={7}
+                className="px-4 py-3 text-left border-t border-zinc-200 dark:border-zinc-700"
+              >
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold text-sm sm:text-base">
+                  <DollarSign className="w-4 h-4 text-green-500" />
+                  <span className="font-mono">
+                    {filteredLeads
+                      .reduce((acc, lead) => acc + lead.earning, 0)
+                      .toFixed(2)}
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
         </table>
 
         {/* show information about leads */}
@@ -544,14 +561,14 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
               <div className="flex items-center space-x-3">
                 <Wifi className="w-4 h-4 text-green-500" />
                 <span className="font-mono text-1xl">
-                  <strong>IP Address: </strong>{whatIsMyIP?.ip}
+                  {whatIsMyIP?.ip}
                 </span>
               </div>
               {/* Full Address */}
               <div className="flex items-center space-x-3">
                 <MapPin className="w-4 h-4 text-red-500" />
                 <span className="font-mono text-1xl">
-                  <strong>From: </strong>{whatIsMyIP?.region}, {whatIsMyIP?.city}, {whatIsMyIP?.postal}
+                  {whatIsMyIP?.region}, {whatIsMyIP?.city}, {whatIsMyIP?.postal}
                 </span>
               </div>
               {/* Earning */}
