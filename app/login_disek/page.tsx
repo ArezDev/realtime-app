@@ -12,33 +12,6 @@ export default function LoginPage() {
   const [Loading, setLoading] = useState("OPEN");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    initAudio();
-    e.preventDefault();
-    try {
-      const res = await axios.post("/api/login", { password });
-      setLoading('Wait...');
-      if (res.data?.success === true) {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Login Berhasil',
-          text: 'Anda berhasil login!',
-          timer: 500,
-          showConfirmButton: false,
-        });
-        router.push("/");
-      }
-    } catch (err: any) {
-      await Swal.fire({
-        icon: 'error',
-        title: 'Server Error!',
-        text: 'Your IP Address has been blocked!',
-        theme: 'auto',
-      });
-      return;
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) =>{
     initAudio();
     e.preventDefault();
@@ -48,6 +21,7 @@ export default function LoginPage() {
       allowOutsideClick: false,
       allowEscapeKey: false,
       timer: 5000,
+      theme: 'auto',
       didOpen: () => {
         Swal.showLoading();
       },
@@ -59,10 +33,11 @@ export default function LoginPage() {
           Swal.close(); // Tutup swal loading setelah response
           Swal.fire({
             icon: 'success',
-            title: 'Login Berhasil',
-            text: 'Anda berhasil login!',
+            title: 'Welcome!',
+            text: '',
             showConfirmButton: false,
-            timer: 1000,
+            timer: 750,
+            theme: 'auto',
           }).then(() => {
             router.push("/");
           });
@@ -73,6 +48,7 @@ export default function LoginPage() {
           icon: 'error',
           title: 'Server Error!',
           text: 'Your IP Address has been blocked!',
+          theme: 'auto',
         });
       }
   };
