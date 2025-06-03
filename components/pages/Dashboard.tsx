@@ -141,14 +141,10 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     };
 
     fetchTopCountry(); // pertama kali jalan
-    const interval = setInterval(fetchTopCountry, 60000); // refresh tiap 10 detik
+    const interval = setInterval(fetchTopCountry, 120000); // refresh tiap 2 menit
 
     return () => clearInterval(interval); // bersihkan interval saat komponen unmount
   }, []);
-
-  useEffect(() => {
-    console.log("CountryData updated:", CountryData);
-  }, [CountryData]);
 
   const filteredLeads = (data?.leads ?? []).filter((lead) => {
   const createdAt = new Date(lead.created_at);
