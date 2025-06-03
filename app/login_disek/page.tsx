@@ -40,6 +40,7 @@ export default function LoginPage() {
   };
 
   const handleLogin = async (e: React.FormEvent) =>{
+    initAudio();
     e.preventDefault();
     Swal.fire({
       title: 'Logging in...',

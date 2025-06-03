@@ -232,9 +232,15 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                     )}
                 </div>
 
-                {/* IP */}
-                <div className="flex-grow min-w-[90px] max-w-[150px] font-serif text-zinc-600 dark:text-teal-300 text-xs break-words">
-                    {click.ip}
+                {/* IP Address*/}
+                <div 
+                className="flex-grow min-w-[90px] max-w-[150px] truncate font-serif 
+                text-zinc-600 dark:text-teal-300 text-xs break-words"
+                title={click.ip}
+                >
+                  {click.ip.length > 9
+                    ? click.ip.slice(0, 9) + "…"
+                    : click.ip}
                 </div>
 
                 {/* Network Icon */}
