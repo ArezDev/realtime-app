@@ -10,11 +10,11 @@ if (!getApps().length) {
 const db = getFirestore();
 const BATCH_LIMIT = 500;
 
-/// 🔁 Hapus live_clicks lebih dari 1 menit
+/// 🔁 Hapus live_clicks setiap 1 menit
 export const deleteOldLiveClicks = onSchedule(
   { schedule: "every 1 minutes" },
   async () => {
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const oneMinuteAgo = Timestamp.fromDate(new Date(Date.now() - 60 * 1000));
     let totalDeleted = 0;
 
     while (true) {
@@ -42,7 +42,7 @@ export const deleteOldLiveClicks = onSchedule(
 export const deleteOldClicks = onSchedule(
   { schedule: "every 60 minutes" },
   async () => {
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const oneDayAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
     let totalDeleted = 0;
 
     while (true) {
@@ -71,7 +71,7 @@ export const deleteOldUserSummaries = onSchedule(
   { schedule: "every day 00:00" },
   async () => {
     const now = new Date();
-    now.setMonth(now.getMonth() - 2); // mundur 2 bulan
+    now.setMonth(now.getMonth() + 2); // mundur 2 bulan
     const cutoffDate = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
     let totalDeleted = 0;
@@ -79,7 +79,7 @@ export const deleteOldUserSummaries = onSchedule(
     while (true) {
       const snapshot = await db
         .collection("user_summary")
-        .where("created_date", "<=", cutoffDate)
+        .where("created_date", ">=", cutoffDate)
         .limit(BATCH_LIMIT)
         .get();
 
