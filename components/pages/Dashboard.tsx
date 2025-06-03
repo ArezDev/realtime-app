@@ -4,8 +4,8 @@ import ReactCountryFlag from "react-country-flag";
 import Image from "next/image";
 import axios from "axios";
 import { RiSmartphoneLine } from "react-icons/ri";
-import { FcFlashOn } from "react-icons/fc";
-import { useState } from "react";
+import { FcBarChart, FcFlashOn } from "react-icons/fc";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import { ClientDate } from "./clientDate";
 import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
 import { isAfter, isBefore, setHours, setMinutes, setSeconds, addDays } from "date-fns";
@@ -27,6 +27,13 @@ interface TopLead {
   total: number;
 }
 
+interface TopCountry {
+  countryName: string;
+  totalLeads: number;
+  totalClicks: number;
+  cr: any;
+}
+
 interface Lead {
   id: string;
   userId: string;
@@ -44,6 +51,7 @@ interface User {
 }
 
 interface DashboardData {
+  topCountry: TopCountry[];
   clicks: Click[];
   liveClicks: Click[];
   topUsers: User[];
@@ -106,6 +114,7 @@ interface IPInfo {
 }
 
 export function RealtimeTab({ data }: { data: DashboardData }) {
+
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLiveClick, setSelectedLiveClick] = useState<Click | null>(null);
@@ -113,11 +122,34 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   const [whatIsMyIP, setWhatIsMyIP] = useState<IPInfo | null>(null);
   const [searchUser, setSearchUser] = useState("");
   const [searchCountry, setSearchCountry] = useState("");
-
+  const [CountryData, setCountryData] = useState([]);
   const now = new Date();
   const today5AM = setSeconds(setMinutes(setHours(new Date(), 5), 0), 0);
   const start = now < today5AM ? addDays(today5AM, -1) : today5AM;
   const end = addDays(start, 1);
+
+  useEffect(() => {
+    const fetchTopCountry = async () => {
+      try {
+        const res = await axios.get('/api/top_country');
+        if (res.data) {
+          setCountryData(res.data.data);
+        }
+      } catch (error) {
+        console.error('Gagal fetch data negara:', error);
+      }
+    };
+
+    fetchTopCountry(); // pertama kali jalan
+    const interval = setInterval(fetchTopCountry, 60000); // refresh tiap 10 detik
+
+    return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+  }, []);
+
+  useEffect(() => {
+    console.log("CountryData updated:", CountryData);
+  }, [CountryData]);
+
   const filteredLeads = (data?.leads ?? []).filter((lead) => {
   const createdAt = new Date(lead.created_at);
   return (
@@ -606,7 +638,46 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     {/* Chart & Top Leads */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Top Country Chart */}
-        <TopCountryChart countryData={data.countryData} />
+        {/* <TopCountryChart countryData={data.countryData} /> */}
+        <Card className="rounded-2xl shadow-lg bg-gradient-to-r from-cyan-50 via-cyan-100 to-blue-200 
+            dark:bg-gradient-to-r dark:from-zinc-800 dark:via-zinc-900 dark:to-zinc-700
+            hover:bg-gradient-to-r hover:from-blue-300 hover:via-cyan-200 hover:to-cyan-100
+            dark:hover:bg-gradient-to-r dark:hover:from-slate-900 dark:hover:via-slate-800 dark:hover:to-slate-950"
+        >
+        <div className="flex items-start justify-start gap-2 mb-1 p-0">
+            <FcBarChart className="text-2xl text-blue-500 animate-pulse" />
+            <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Country</h2>
+        </div>
+          <CardContent className="p-4">
+              {(!Array.isArray(CountryData) || CountryData.length === 0) ? (
+                <p className="text-sm text-gray-500 dark:text-white-400">Loading...</p>
+              ) : (
+                <ul className="font-mono text-1xl space-y-2 text-zinc-700 dark:text-white">
+                  {CountryData.map(
+                    (item: { countryName: string; totalLeads: number; totalClicks: number; cr: any;  }, i: number) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-5 h-6">
+                          <ReactCountryFlag
+                            countryCode={item.countryName || "XX"}
+                            svg
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: "3px",
+                              boxShadow: "0 0 2px rgba(0,0,0,0.15)",
+                            }}
+                            title={item.countryName}
+                          />
+                        </div>
+                        <span className="truncate">
+                          {item.countryName} ({item.totalLeads}) CLICK: {item.totalClicks} CR: {item.cr} </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              )}
+          </CardContent>
+        </Card>
         {/* Top Leads */}
         <Card className="rounded-2xl shadow-lg bg-gradient-to-r from-cyan-50 via-cyan-100 to-blue-200 
             dark:bg-gradient-to-r dark:from-zinc-800 dark:via-zinc-900 dark:to-zinc-700
