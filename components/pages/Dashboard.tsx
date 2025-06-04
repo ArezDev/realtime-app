@@ -141,9 +141,9 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     };
 
     fetchTopCountry(); // pertama kali jalan
-    const interval = setInterval(fetchTopCountry, 120000); // refresh tiap 2 menit
+    //const interval = setInterval(fetchTopCountry, 120000); // refresh tiap 2 menit
 
-    return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+    //return () => clearInterval(interval); // bersihkan interval saat komponen unmount
   }, []);
 
   const filteredLeads = (data?.leads ?? []).filter((lead) => {

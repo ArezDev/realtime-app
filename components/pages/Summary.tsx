@@ -1,14 +1,19 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useMemo, useState } from "react";
 import { Download, RotateCcw } from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 interface Summary {
   id: string;
   user: string;
+  total_lead: number;
   total_earning: number;
   total_click: number;
   created_at: Date;
@@ -42,11 +47,11 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
       },
     ];
   };
-
+  const [summary, setSummary] = useState<Summary[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateRange, setDateRange] = useState(getInitialRange());
   const [searchUser, setSearchUser] = useState("");
-
   const formatDate = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
       d.getDate()
@@ -54,66 +59,77 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
 
   const startDateStr = formatDate(dateRange[0].startDate);
   const endDateStr = formatDate(dateRange[0].endDate);
-
-  const filteredSummary = useMemo(() => {
-    return (data?.summary ?? []).filter((item) => {
-      const created = item.created_at instanceof Date
-        ? item.created_at
-        : new Date(item.created_at);
-      return (
-        created >= dateRange[0].startDate &&
-        created < dateRange[0].endDate &&
-        item.user.toLowerCase().includes(searchUser.toLowerCase().trim())
-      );
-    });
-  }, [data?.summary, dateRange, searchUser]);
-
+  async function fetchSummaryByDate (iki: string, yo: string) {
+      try {
+        //setLoading(true);
+          Swal.fire({
+            title: "Processing...",
+            text: "Fetching summary data...",
+            allowOutsideClick: false,
+            didOpen: async () => {
+              Swal.showLoading();
+              const res = await axios.get(`/api/summary_leads`, {
+                params: {
+                  start: iki,
+                  end: yo,
+                }
+              });
+              if (res.data) {
+                Swal.close();
+                setSummary(res?.data?.summary ?? []);
+              }
+            },
+          });
+      } catch (err: any) {
+        console.error("Fetch error:", err);
+        setSummary([]);
+      } finally {
+        setLoading(false);
+      }
+  };
   const groupedSummary = useMemo(() => {
-    return Object.values(
-      filteredSummary.reduce<Record<string, Summary & { total_leads: number }>>(
-        (acc, item) => {
-          const user = item.user;
-          if (!acc[user]) {
-            acc[user] = {
-              ...item,
-              total_click: item.total_click,
-              total_earning: item.total_earning,
-              total_leads: data?.hitungLead?.[user] ?? 0,
-            };
-          } else {
-            acc[user].total_click += item.total_click;
-            acc[user].total_earning += item.total_earning;
-            // total_leads tidak dijumlahkan ulang karena sudah dihitung dari luar
-          }
-          return acc;
-        },
-        {}
-      )
+  const grouped = Object.values(
+      summary.reduce<Record<string, Summary>>((acc, item) => {
+        if (!acc[item.user]) {
+          acc[item.user] = { ...item };
+        } else {
+          acc[item.user].total_click += item.total_click;
+          acc[item.user].total_earning;
+          acc[item.user].total_lead;
+        }
+        return acc;
+      }, {})
     );
-  }, [filteredSummary, data?.hitungLead]);
+    // Urutkan dari total_earning terbesar ke terkecil
+    return grouped.sort((a, b) => b.total_earning - a.total_earning);
+  }, [summary]);
 
   const resetFilters = () => {
-    setDateRange(getInitialRange());
+    const defaultRange = getInitialRange();
+    setDateRange(defaultRange);
     setSearchUser("");
+    fetchSummaryByDate(startDateStr, endDateStr);
   };
 
   const handleExport = () => {
     const csvContent = [
       ["User", "Leads", "CR (%)", "Clicks", "Earning"],
-      ...groupedSummary.map((row) => {
+      ...summary?.map((row) => {
         const cr =
           row.total_click > 0
             ? ((row.total_earning / row.total_click) * 100).toFixed(2)
             : "0.00";
         return [
           row.user,
-          row.total_leads?.toString() || "0",
+          //row.total_leads?.toString() || "0",
           `${cr}%`,
           row.total_click.toString(),
           `$${row.total_earning.toFixed(2)}`,
         ];
       }),
-    ].map((e) => e.join(",")).join("\n");
+    ]
+      .map((e) => e.join(","))
+      .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -122,14 +138,18 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
     link.click();
   };
 
+  useEffect(()=>{
+    setTimeout(() => {
+      fetchSummaryByDate(startDateStr, endDateStr);
+    }, 500);
+  },[]);
+
   return (
     <div className="pt-0 space-y-6">
-      {/* Filter bar */}
       <div className="flex flex-wrap justify-center items-center gap-4 px-3 py-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
         <button
           onClick={() => setShowDatePicker((v) => !v)}
           className="rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm font-medium dark:bg-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition"
-          aria-label="Toggle date range picker"
         >
           {startDateStr} to {endDateStr}
         </button>
@@ -143,14 +163,13 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
         <button
           onClick={handleExport}
           className="flex items-end gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-          aria-label="Export summary CSV"
         >
           <Download size={18} />
           Export
         </button>
       </div>
 
-      {/* Date range picker */}
+      {/* Date Picker */}
       {showDatePicker && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
@@ -160,41 +179,88 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
             className="bg-white dark:bg-zinc-900 p-4 rounded shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Tombol preset di atas date picker */}
+            <div className="flex justify-between mb-4 space-x-2">
+              <button
+                onClick={() => {
+                  const now = new Date();
+                  const start = new Date(now.setHours(5, 0, 0, 0));
+                  const end = new Date(start);
+                  end.setDate(start.getDate() + 1);
+                  setDateRange([{ startDate: start, endDate: end, key: "selection" }]);
+                }}
+                className="flex-1 py-2 rounded border border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => {
+                  const now = new Date();
+                  now.setDate(now.getDate() - 1);
+                  const start = new Date(now.setHours(5, 0, 0, 0));
+                  const end = new Date(start);
+                  end.setDate(start.getDate() + 1);
+                  setDateRange([{ startDate: start, endDate: end, key: "selection" }]);
+                }}
+                className="flex-1 py-2 rounded border border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+              >
+                Yesterday
+              </button>
+              <button
+                onClick={() => {
+                  const now = new Date();
+                  const day = now.getDay();
+                  const daysSinceMonday = day === 0 ? 6 : day - 1;
+                  const lastMonday = new Date(now);
+                  lastMonday.setHours(5, 0, 0, 0);
+                  lastMonday.setDate(now.getDate() - daysSinceMonday - 7);
+                  const lastSunday = new Date(lastMonday);
+                  lastSunday.setDate(lastMonday.getDate() + 6);
+                  setDateRange([{ startDate: lastMonday, endDate: lastSunday, key: "selection" }]);
+                }}
+                className="flex-1 py-2 rounded border border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+              >
+                Last Week
+              </button>
+            </div>
+
             <DateRange
               onChange={(item) => {
                 const { startDate, endDate } = item.selection;
                 if (startDate && endDate) {
-                  const start = new Date(startDate);
-                  const end = new Date(endDate);
-                  start.setHours(5, 0, 0, 0);
-                  end.setDate(end.getDate() + 1);
-                  end.setHours(5, 0, 0, 0);
                   setDateRange([
                     {
-                      startDate: start,
-                      endDate: end,
+                      startDate,
+                      endDate,
                       key: "selection",
                     },
                   ]);
                 }
               }}
               moveRangeOnFirstSelection={false}
-              ranges={dateRange}
               maxDate={new Date()}
               editableDateInputs={false}
+              ranges={dateRange}
             />
+
             <button
-              onClick={() => setShowDatePicker(false)}
-              className="mt-5 w-full py-2 flex justify-center items-center font-mono bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              aria-label="Set date range"
+              onClick={() => {
+                setShowDatePicker(false);
+                const start = formatDate(dateRange[0].startDate);
+                const end = formatDate(dateRange[0].endDate);
+                fetchSummaryByDate(start, end);
+              }}
+              className="mt-4 w-full py-2 flex justify-center items-center font-mono bg-blue-600 text-white rounded hover:bg-blue-700 transition"
             >
               Set
             </button>
           </div>
+
+
         </div>
       )}
 
-      {/* Search */}
+      {/* Search USER */}
       <div className="w-auto mb-4">
         <input
           type="text"
@@ -202,11 +268,10 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
           value={searchUser}
           onChange={(e) => setSearchUser(e.target.value)}
           className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label="Search user"
         />
       </div>
 
-      {/* Table */}
+      {/* Tabel Summary */}
       <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-md">
         <table className="table-auto min-w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500">
@@ -214,12 +279,12 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
               <th className="px-3 py-1">User</th>
               <th className="px-1 py-1">Clicks</th>
               <th className="px-1 py-1">Leads</th>
-              <th className="px-1 py-1">CR (%)</th>
+              <th className="px-2 py-1">CR</th>
               <th className="px-1 py-1">Earning</th>
             </tr>
           </thead>
           <tbody>
-            {groupedSummary.length ? (
+            {groupedSummary?.length ? (
               groupedSummary.map((row, i) => {
                 const cr =
                   row.total_click > 0
@@ -228,7 +293,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
 
                 return (
                   <tr
-                    key={`summary-${row.user}`}
+                    key={`summary-${row.id}`}
                     className={`transition-colors duration-200 ${
                       i % 2 === 0
                         ? "bg-cyan-50 dark:bg-zinc-900"
@@ -237,7 +302,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
                   >
                     <td className="px-2 py-1 font-mono">{row.user}</td>
                     <td className="px-2 py-1 font-mono">{row.total_click}</td>
-                    <td className="px-2 py-1 font-mono">{row.total_leads}</td>
+                    <td className="px-2 py-1 font-mono">{row.total_lead}</td>
                     <td className="px-2 py-1 font-mono">{cr.toFixed(2)}</td>
                     <td className="px-2 py-1 font-mono">${row.total_earning.toFixed(2)}</td>
                   </tr>
@@ -256,6 +321,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
           </tbody>
         </table>
       </div>
+
     </div>
   );
 }
