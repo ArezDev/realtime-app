@@ -66,6 +66,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
             title: "Processing...",
             text: "Fetching summary data...",
             allowOutsideClick: false,
+            theme: "auto",
             didOpen: async () => {
               Swal.showLoading();
               const res = await axios.get(`/api/summary_leads`, {
