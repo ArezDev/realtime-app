@@ -13,8 +13,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) =>{
-    initAudio();
     e.preventDefault();
+    initAudio();
     Swal.fire({
       title: 'Logging in...',
       text: 'Please wait a moment',
@@ -62,12 +62,20 @@ export default function LoginPage() {
       <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-white">
         
       </h2>
-
+      <input
+        type="text"
+        name="username"
+        autoComplete="username"
+        className="sr-only"
+        aria-hidden="true"
+        defaultValue='balanesohib'
+      />
       <input
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="password ?"
+        autoComplete="current-password"
         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 

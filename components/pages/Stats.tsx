@@ -27,9 +27,6 @@ export function StatsRealtime({ data }: { data: DashboardData }) {
   
   const [searchUser, setSearchUser] = useState("");
   
-  // const filteredClicks = data.clicks.filter((click) =>
-  //   click.user.toLowerCase().includes(searchUser.toLowerCase())
-  // );
   const filteredClicks = Array.isArray(data?.clicks)
   ? data.clicks.filter((click) =>
       click?.user?.toLowerCase?.().includes(searchUser.toLowerCase())

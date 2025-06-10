@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
-import TopCountryChart from "../chart/TopCountryChart";
 import ReactCountryFlag from "react-country-flag";
 import Image from "next/image";
 import axios from "axios";
+import { io } from "socket.io-client";
 import { RiSmartphoneLine } from "react-icons/ri";
 import { FcBarChart, FcFlashOn } from "react-icons/fc";
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ClientDate } from "./clientDate";
 import { FaArrowPointer, FaComputer, FaCrown } from "react-icons/fa6";
 import { isAfter, isBefore, setHours, setMinutes, setSeconds, addDays } from "date-fns";
@@ -140,10 +140,34 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
       }
     };
 
-    fetchTopCountry(); // pertama kali jalan
-    //const interval = setInterval(fetchTopCountry, 120000); // refresh tiap 2 menit
+    fetchTopCountry();
+    
+    // Inisialisasi koneksi socket
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+      transports: ["websocket"],
+    });
 
-    //return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+    socket.on("connect", () => {
+      //console.log("Connected websocket TopCountry with id:", socket.id);
+    });
+
+    socket.on("user-lead", async (payload: any) => {
+      //console.log(payload);
+      setTimeout(async () => {
+        const newTopCountryData = await axios.get('/api/top_country');
+        setCountryData(newTopCountryData?.data?.data);
+      }, 5000);
+    });
+
+    socket.on("disconnect", () => {
+      //console.log("Disconnected");
+    });
+
+    return () => {
+      socket.off("user-lead");
+      socket.off("disconnect");
+      socket.close();
+    };
   }, []);
 
   const filteredLeads = (data?.leads ?? []).filter((lead) => {
@@ -155,6 +179,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     lead.country.toLowerCase().includes(searchCountry.toLowerCase())
   );
   });
+
   const getIPinfo = async (ip: string) => {
     const result = await axios.get(`https://ipwhois.pro/${ip}`, {
       params: { key: "4OehYgGBlw8CpI5x" },
@@ -218,7 +243,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
         </div>
 
         {/* live clicks content */}
-        <div className="p-1 pt-0 text-sm">
+        <div className="p-0 pt-0 text-sm">
         <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
             {[...(Array.isArray(data?.liveClicks) ? data.liveClicks : [])]
               .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -250,7 +275,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 </div>
 
                 {/* Device Icon */}
-                <div className="flex-shrink-0 w-6 text-lg flex justify-center items-center text-zinc-600 dark:text-teal-300">
+                <div className="flex-shrink-0 w-4 text-lg flex justify-center items-center text-zinc-600 dark:text-teal-300">
                     {click.source.match(
                     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
                     ) ? (
@@ -261,13 +286,11 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 </div>
 
                 {/* IP Address*/}
-                <div 
-                className="flex-grow min-w-[90px] max-w-[150px] truncate font-serif 
-                text-zinc-600 dark:text-teal-300 text-xs break-words"
+                <div className="flex-grow min-w-[90px] max-w-[150px] truncate font-serif text-zinc-600 dark:text-teal-300 text-xs break-words"
                 title={click.ip}
                 >
-                  {click.ip.length > 9
-                    ? click.ip.slice(0, 9) + "…"
+                  {click.ip.length > 7
+                    ? click.ip.slice(0, 7) + "…"
                     : click.ip}
                 </div>
 
@@ -275,13 +298,13 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 <div className="flex-shrink-0 w-4 text-center text-sm">
                     {
                     click.network.includes('IMONETIZEIT') ? 
-                       ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={10} /> ) 
+                       ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={25} /> ) 
                        :
                    click.network.includes('LOSPOLLOS') ? 
-                       ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={17} height={10} /> ) 
+                       ( <Image src={'/network/trafee.png'} alt={"Trafee"} width={17} height={25} /> ) 
                        :
                    click.network.includes('TORAZZO') ? 
-                       ( <Image src={'/network/lospollos.png'} alt={"Lospollos"} width={17} height={10} /> ) 
+                       ( <Image src={'/network/lospollos.png'} alt={"Lospollos"} width={17} height={25} /> ) 
                        : (
                            <Globe />
                        ) 
@@ -440,10 +463,10 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
             <thead className="bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500 text-white dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap">User</th>
-              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Country</th>
-              <th className="px-3 py-1 text-left font-semibold whitespace-nowrap">Network</th>
+              <th className="px-1 py-1 text-left font-semibold whitespace-nowrap">Country</th>
+              <th className="px-1 py-1 text-left font-semibold whitespace-nowrap">Network</th>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">Source</th>
-              <th className="px-2 py-1 text-left font-semibold whitespace-nowrap">Earning</th>
+              <th className="px-4 py-1 text-left font-semibold whitespace-nowrap">Earning</th>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden md:table-cell">IP</th>
               <th className="px-4 py-1 text-left font-semibold whitespace-nowrap hidden sm:table-cell">Time</th>
             </tr>
@@ -472,16 +495,16 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 </td>
                 {/* Country */}
                 <td className="px-3 py-1 whitespace-nowrap text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
-                    <ReactCountryFlag
+                  <ReactCountryFlag
                     countryCode={lead.country || "XX"}
                     svg
                     style={{ width: "1.5em", height: "1em", borderRadius: "3px", boxShadow: "0 0 2px rgba(0,0,0,0.2)" }}
                     title={lead.country}
-                    />
-                    <span className="hidden sm:inline">{lead.country}</span>
+                  />
+                  <span className="hidden sm:inline">{lead.country}</span>
                 </td>
                 {/* Network */}
-                <td className="px-7 py-1 text-1xl whitespace-nowrap text-zinc-800 dark:text-zinc-100">
+                <td className="px-3 py-1 text-1xl whitespace-nowrap text-zinc-800 dark:text-zinc-100">
                 {lead.network.includes('IMONETIZEIT') ? 
                     ( <Image src={'/network/imo.ico'} alt={"iMonetizeIt"} width={17} height={10} /> ) 
                     :
@@ -641,10 +664,10 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
             dark:hover:bg-gradient-to-r dark:hover:from-slate-900 dark:hover:via-slate-800 dark:hover:to-slate-950"
         >
         <div className="flex items-start justify-start gap-2 mb-1 p-0">
-            <FcBarChart className="text-2xl text-blue-500 animate-pulse" />
-            <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Country</h2>
+          <FcBarChart className="text-2xl text-blue-500 animate-pulse" />
+          <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Country</h2>
         </div>
-          <CardContent className="p-4">
+          {/* <CardContent className="p-6 px-2">
               {(!Array.isArray(CountryData) || CountryData.length === 0) ? (
                 <p className="text-sm text-gray-500 dark:text-white-400">Loading...</p>
               ) : (
@@ -672,6 +695,61 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                   )}
                 </ul>
               )}
+          </CardContent> */}
+          <CardContent className="p-4">
+            {!Array.isArray(CountryData) || CountryData.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">Loading...</p>
+            ) : (
+              <ul className="space-y-3">
+                {CountryData.map(
+                  (
+                    item: {
+                      countryName: string;
+                      totalLeads: number;
+                      totalClicks: number;
+                      cr: any;
+                    },
+                    i: number
+                  ) => (
+                    <li
+                      key={i}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3 shadow-md border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-6 h-6 flex-shrink-0">
+                          <ReactCountryFlag
+                            countryCode={item.countryName || "XX"}
+                            svg
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: "3px",
+                              boxShadow: "0 0 2px rgba(0,0,0,0.15)",
+                            }}
+                            title={item.countryName}
+                          />
+                        </div>
+                        <span className="font-semibold text-gray-800 dark:text-white truncate max-w-[8rem] sm:max-w-[10rem]">
+                          {item.countryName}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <span className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                          Lead: <span className="font-bold">{item.totalLeads}</span>
+                        </span>
+                        <span className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                          Click: <span className="font-bold">{item.totalClicks}</span>
+                        </span>
+                        <span className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                          CR: <span className="font-bold">{item.cr}</span>
+                        </span>
+                      </div>
+                    </li>
+                  )
+                )}
+              </ul>
+            )}
           </CardContent>
         </Card>
         {/* Top Leads */}
@@ -684,14 +762,40 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
           <FcFlashOn className="text-2xl text-blue-500 animate-pulse" />
           <h2 className="font-mono text-1xl text-zinc-800 dark:text-white">Top Leads</h2>
         </div>
-          <CardContent className="p-6">
+          {/* <CardContent className="p-2 px-3">
               {!Array.isArray(data?.topLeads) || data.topLeads.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-white-400">No leads available.</p>
             ) : (
               <ul className="font-mono text-1xl space-y-1 text-zinc-700 dark:text-white">
                 {data.topLeads.map((lead, i) => (
                   <li key={i}>
-                    {i + 1}. {lead.name} - ${lead.total.toFixed(2)}
+                    {i + 1}. {lead.name}  ${lead.total.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent> */}
+          <CardContent className="p-4">
+            {!Array.isArray(data?.topLeads) || data.topLeads.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">No leads available.</p>
+            ) : (
+              <ul className="space-y-3">
+                {data.topLeads.map((lead, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-2 shadow-sm"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-semibold text-white bg-blue-600 dark:bg-blue-400 rounded-full w-6 h-6 flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm font-medium text-gray-800 dark:text-white">
+                        {lead.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                      ${lead.total.toFixed(2)}
+                    </span>
                   </li>
                 ))}
               </ul>

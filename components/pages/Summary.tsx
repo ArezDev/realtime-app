@@ -102,8 +102,14 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
       }, {})
     );
     // Urutkan dari total_earning terbesar ke terkecil
-    return grouped.sort((a, b) => b.total_earning - a.total_earning);
-  }, [summary]);
+    //return grouped.sort((a, b) => b.total_earning - a.total_earning);
+    const sorted = grouped.sort((a, b) => b.total_earning - a.total_earning);
+    if (searchUser.trim() === "") return sorted;
+    // Filter by search keyword (case-insensitive)
+    return sorted.filter((item) =>
+      item.user.toLowerCase().includes(searchUser.toLowerCase())
+    );
+  }, [summary, searchUser]);
 
   const resetFilters = () => {
     const defaultRange = getInitialRange();

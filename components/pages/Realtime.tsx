@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RealtimeTab } from "./Dashboard";
@@ -10,13 +10,11 @@ import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { playAudio } from "@/lib/Notif_lead";
 import axios from "axios";
-import Swal from "sweetalert2";
 
 export default function DashboardPage(props: any) {
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { theme, setTheme } = useTheme();
   const [dashboardData, setDashboardData] = useState(props);
-  const [CountryData, setCountryData] = useState([]);
-  const [SummaryData, setSummary] = useState<any>({});
   const [selectedTab, setSelectedTab] = useState("realtime");
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -25,40 +23,15 @@ export default function DashboardPage(props: any) {
     const newData = await axios.get('/api/dashboard');
     setDashboardData(newData?.data);
   }
-  const fetchTopCountry = async () => {
-    try {
-      const res = await axios.get('/api/top_country');
-      if (res.data) {
-        setCountryData(res.data.data);
-      }
-    } catch (error) {
-      console.error('Gagal fetch data negara:', error);
-    }
-  };
 
+  //cek mounted
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    // Inisialisasi data dashboard saat komponen pertama kali dimuat
-    // async function refreshData() {
-    //   const newData = await axios.get('/api/dashboard');
-    //   setDashboardData(newData?.data);
-    // }
-    // refreshData();
-    // Interval untuk memperbarui data klik secara live
-    // const interval = setInterval(async () => {
-    //   const result = await axios.get('/api/live_click');
-    //   setDashboardData((prev: any) => ({ ...prev, liveClicks: result?.data?.liveClicks }));
-    //   refreshData();
-    // }, 60000);
-    // return () => clearInterval(interval);
-  }, []);
-
+  // Inisialisasi koneksi websocket
   useEffect(() => {
 
-    // Inisialisasi koneksi socket
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
       transports: ["websocket"],
     });
@@ -72,9 +45,7 @@ export default function DashboardPage(props: any) {
       setTimeout(async () => {
         //play notif!
           playAudio();
-          fetchTopCountry();
           const newData = await axios.get('/api/dashboard');
-          //setDashboardData(newData?.data);
           setDashboardData((prev: any) => ({ ...prev, leads: newData?.data?.leads }));
       }, 5000); // Delay 5 detik untuk menunggu data terupdate
     });
@@ -103,7 +74,7 @@ export default function DashboardPage(props: any) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 transition-colors">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
 
         <nav className="sticky top-0 z-50 bg-gray-100 dark:bg-zinc-900 shadow-md dark:border-zinc-700 py-3 flex items-center">
           {/* Kiri: Logo + Tab Hamburger */}
@@ -200,6 +171,7 @@ export default function DashboardPage(props: any) {
           </main>
         </Tabs>
 
+        {/* Footer */}
         <footer className="border-t border-zinc-200 dark:border-zinc-700 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
           Powered by <span className="font-semibold text-zinc-700 dark:text-zinc-200">- BalaneSöhib</span>
         </footer>
