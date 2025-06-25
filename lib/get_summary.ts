@@ -1,11 +1,12 @@
 import * as admin from "firebase-admin";
-import { db } from "./firebaseAdmin";
+//import { db } from "./firebaseAdmin";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { Timestamp } from "firebase-admin/firestore";
+import db from "./db";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -60,52 +61,96 @@ export async function fetchSummary(saiki: string | Date | admin.firestore.Timest
     const now = startDate.hour(5).minute(0).second(0).millisecond(0);
     const to = endDate.add(1, "day").hour(5).minute(0).second(0).millisecond(0);
 
-    //cek lead today!
-    const getLeadToday = await db.collection('leads')
-    .where('created_at', '>=', now.toDate()).where('created_at', '<=', to.toDate()).get();
-    getLeadToday.forEach((doc)=> {
-        const data = doc.data();
-        if (!data.created_at || !data.userId) return;
-        const createdAt = dayjs(data.created_at.toDate()).tz("Asia/Jakarta");
-        if (createdAt.isSameOrAfter(now) && createdAt.isSameOrBefore(to)) {
-            const userId = data.userId;
-            const earning = data.earning || 0;
-            hitungLead[userId] = (hitungLead[userId] || 0) + 1;
-            hitungEarning[userId] = (hitungEarning[userId] || 0) + earning;
-        }
-    });
-    // const getAllClicksToday = await db.collection('clicks')
-    // .where('created_at', '>=', start.toDate()).where('created_at', '<=', end.toDate()).get();
-    // getAllClicksToday.forEach((doc)=>{
+    // //cek lead today!
+    // const getLeadToday = await db.collection('leads')
+    // .where('created_at', '>=', now.toDate()).where('created_at', '<=', to.toDate()).get();
+    // getLeadToday.forEach((doc)=> {
     //     const data = doc.data();
-    //     if (!data.created_at || !data.user) return;
-    //     const userId = data.user;
-    //     hitungClick[userId] = (hitungClick[userId] || 0) + 1;
+    //     if (!data.created_at || !data.userId) return;
+    //     const createdAt = dayjs(data.created_at.toDate()).tz("Asia/Jakarta");
+    //     if (createdAt.isSameOrAfter(now) && createdAt.isSameOrBefore(to)) {
+    //         const userId = data.userId;
+    //         const earning = data.earning || 0;
+    //         hitungLead[userId] = (hitungLead[userId] || 0) + 1;
+    //         hitungEarning[userId] = (hitungEarning[userId] || 0) + earning;
+    //     }
     // });
-    //get summary data user!
-    const getSummary = await db.collection('user_summary')
-    .where('created_date', '>=', normalizeToDayjs(saiki).format("YYYY-MM-DD")).where('created_date', '<=', normalizeToDayjs(sampek).format("YYYY-MM-DD")).get();
-    const summary: { 
-        id: string; 
-        user: string; 
-        total_lead: any; 
-        total_earning: any; 
-        total_click: any; 
-        created_at: any; 
+    // //get summary data user!
+    // const getSummary = await db.collection('user_summary')
+    // .where('created_date', '>=', normalizeToDayjs(saiki).format("YYYY-MM-DD")).where('created_date', '<=', normalizeToDayjs(sampek).format("YYYY-MM-DD")).get();
+    // const summary: { 
+    //     id: string; 
+    //     user: string; 
+    //     total_lead: any; 
+    //     total_earning: any; 
+    //     total_click: any; 
+    //     created_at: any; 
+    // }[] = [];
+    // getSummary.forEach((doc) => {
+    //     const data = doc.data();
+    //     if (!data.created_at || !data.user || !data.total_click) return;
+    //     const userId = data.user;
+    //     summary.push({
+    //         id: doc.id,
+    //         user: userId,
+    //         total_lead: hitungLead[userId] || 0,
+    //         total_earning: hitungEarning[userId] || 0,
+    //         total_click: data.total_click,
+    //         created_at: data.created_at.toDate(),
+    //     });
+    // });
+
+    //Mysql Updated !!!
+    //cek lead today!
+    // Assume db is a mysql2/promise connection or pool
+
+    // 1. Get leads in the date range
+    const [leads] = await db.execute(
+      `SELECT userId, earning, created_at FROM leads WHERE created_at >= ? AND created_at <= ?`,
+      [now.format("YYYY-MM-DD HH:mm:ss"), to.format("YYYY-MM-DD HH:mm:ss")]
+    );
+
+    for (const lead of leads as any[]) {
+      if (!lead.created_at || !lead.userId) continue;
+      const createdAt = dayjs(lead.created_at).tz("Asia/Jakarta");
+      if (createdAt.isSameOrAfter(now) && createdAt.isSameOrBefore(to)) {
+        const userId = lead.userId;
+        const earning = lead.earning || 0;
+        hitungLead[userId] = (hitungLead[userId] || 0) + 1;
+        hitungEarning[userId] = (hitungEarning[userId] || 0) + earning;
+      }
+    }
+
+    // 2. Get user summary in the date range
+    const [summaries] = await db.execute(
+      `SELECT id, user, total_click, created_at, created_date FROM user_summary WHERE created_date >= ? AND created_date <= ?`,
+      [
+        normalizeToDayjs(saiki).format("YYYY-MM-DD"),
+        normalizeToDayjs(sampek).format("YYYY-MM-DD")
+      ]
+    );
+
+    const summary: {
+      id: string;
+      user: string;
+      total_lead: any;
+      total_earning: any;
+      total_click: any;
+      created_at: any;
     }[] = [];
-    getSummary.forEach((doc) => {
-        const data = doc.data();
-        if (!data.created_at || !data.user || !data.total_click) return;
-        const userId = data.user;
-        summary.push({
-            id: doc.id,
-            user: userId,
-            total_lead: hitungLead[userId] || 0,
-            total_earning: hitungEarning[userId] || 0,
-            total_click: data.total_click,
-            created_at: data.created_at.toDate(),
-        });
-    });
+
+    for (const row of summaries as any[]) {
+      if (!row.created_at || !row.user || !row.total_click) continue;
+      const userId = row.user;
+      summary.push({
+        id: row.id,
+        user: userId,
+        total_lead: hitungLead[userId] || 0,
+        total_earning: hitungEarning[userId] || 0,
+        total_click: row.total_click,
+        created_at: dayjs(row.created_at).toDate(),
+      });
+    }
 
     return {
         summary

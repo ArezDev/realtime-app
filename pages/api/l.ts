@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
-import { db } from "@/lib/firebaseAdmin";
+//import { db } from "@/lib/firebaseAdmin";
 import axios from "axios";
+import db from "@/lib/db";
 
 interface LeadData {
   userId: string;
@@ -47,30 +48,70 @@ export default async function handler(
 
     console.log("Checking user:", sub);
 
-    const cekUser = await db
-      .collection("users")
-      .where("username", "==", sub)
-      .limit(1)
-      .get();
+    //Firebase
+    // const cekUser = await db
+    //   .collection("users")
+    //   .where("username", "==", sub)
+    //   .limit(1)
+    //   .get();
 
-    if (cekUser.empty) {
+    // if (cekUser.empty) {
+    //   console.log("User not found:", sub);
+    //   return res.status(404).json({ error: `User ${sub} not found` });
+    // }
+
+    // const leadData: LeadData = {
+    //   userId: sub,
+    //   network: network,
+    //   earning: earningValue,
+    //   country: country || undefined,
+    //   useragent: useragent || undefined,
+    //   ip: ip || undefined,
+    //   created_at: Timestamp.now(),
+    // };
+
+    // console.log("Adding lead data for user:", sub);
+    // const sendData = await db.collection("leads").add(leadData);
+    // if (!sendData) {
+    //   return res.status(500).json({ error: "Failed to save lead data" });
+    // }
+
+    // Check if user exists in MySQL
+    const [rows] = await db.execute(
+      "SELECT id FROM users WHERE username = ? LIMIT 1",
+      [sub]
+    );
+
+    if (!rows || (Array.isArray(rows) && rows.length === 0)) {
       console.log("User not found:", sub);
       return res.status(404).json({ error: `User ${sub} not found` });
     }
 
-    const leadData: LeadData = {
+    const leadData = {
       userId: sub,
       network: network,
       earning: earningValue,
-      country: country || undefined,
-      useragent: useragent || undefined,
-      ip: ip || undefined,
-      created_at: Timestamp.now(),
+      country: country || null,
+      useragent: useragent || null,
+      ip: ip || null,
+      created_at: new Date(),
     };
 
-    console.log("Adding lead data for user:", sub);
-    const sendData = await db.collection("leads").add(leadData);
-    if (!sendData) {
+    console.log("Adding lead data for user (MySQL):", sub);
+    const [result] = await db.execute(
+      `INSERT INTO leads (userId, network, earning, country, useragent, ip, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+      leadData.userId,
+      leadData.network,
+      leadData.earning,
+      leadData.country,
+      leadData.useragent,
+      leadData.ip,
+      leadData.created_at,
+      ]
+    );
+    if (!result || (result as any).affectedRows !== 1) {
       return res.status(500).json({ error: "Failed to save lead data" });
     }
 
@@ -79,20 +120,40 @@ export default async function handler(
     today.setHours(0, 0, 0, 0);
     const dateString = today.toISOString().split("T")[0];
     const summaryId = `${sub}_${dateString}`;
-    const summaryRef = db.collection("user_summary").doc(summaryId);
+    // const summaryRef = db.collection("user_summary").doc(summaryId);
 
+    // console.log(`Updating summary ${summaryId} with +${earningValue}`);
+
+    // await summaryRef.set(
+    //   {
+    //     user: sub,
+    //     created_date: dateString,
+    //     total_earning: FieldValue.increment(earningValue),
+    //     total_click: FieldValue.increment(1),
+    //     created_at: Timestamp.now(),
+    //   },
+    //   { merge: true }
+    // );
+
+    // Update or insert summary in MySQL
     console.log(`Updating summary ${summaryId} with +${earningValue}`);
 
-    await summaryRef.set(
-      {
-        user: sub,
-        created_date: dateString,
-        total_earning: FieldValue.increment(earningValue),
-        total_click: FieldValue.increment(1),
-        created_at: Timestamp.now(),
-      },
-      { merge: true }
+    // Try to update existing summary
+    const [updateResult] = await db.execute(
+      `UPDATE user_summary 
+       SET total_earning = total_earning + ?, total_click = total_click + 1 
+       WHERE user = ? AND created_date = ?`,
+      [earningValue, sub, dateString]
     );
+
+    // If no rows updated, insert new summary row
+    if ((updateResult as any).affectedRows === 0) {
+      await db.execute(
+      `INSERT INTO user_summary (user, created_date, total_earning, total_click, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [sub, dateString, earningValue, 1, new Date()]
+      );
+    }
 
     // Trigger realtime update
     await axios.post(`${process.env.NEXT_PUBLIC_SOCKET_URL}/broadcast`, {

@@ -424,7 +424,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 {data.topUsers.slice(0, 3).map((user, i) => (
                   <li key={i}>
                     <span className="font-semibold text-blue-500">{i + 1}.</span> {user.username}{" "}
-                    <span className="text-sm text-zinc-500">(${user.total.toFixed(2)})</span>
+                    <span className="text-sm text-zinc-500">(${user.total})</span>
                   </li>
                 ))}
               </ul>
@@ -546,7 +546,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                       ""
                     )}
                     <DollarSign className="w-auto h-3 text-green-500" />
-                    <span>{lead.earning.toFixed(2)}</span>
+                    <span>{lead.earning}</span>
                   </div>
                 </td>
                 {/* IP Address */}
@@ -571,8 +571,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                   <DollarSign className="w-4 h-4 text-green-500" />
                   <span className="font-mono">
                     {filteredLeads
-                      .reduce((acc, lead) => acc + lead.earning, 0)
-                      .toFixed(2)}
+                      .reduce((acc, lead) => acc + parseFloat(String(lead.earning || 0)), 0).toFixed(2)}
                   </span>
                 </div>
               </td>
@@ -794,7 +793,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                       </span>
                     </div>
                     <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                      ${lead.total.toFixed(2)}
+                      ${parseFloat(String(lead.total || 0)).toFixed(2)}
                     </span>
                   </li>
                 ))}

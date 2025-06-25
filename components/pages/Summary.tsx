@@ -311,7 +311,7 @@ export function SummaryRealtime({ data }: { data: DashboardData }) {
                     <td className="px-2 py-1 font-mono">{row.total_click}</td>
                     <td className="px-2 py-1 font-mono">{row.total_lead}</td>
                     <td className="px-2 py-1 font-mono">{cr.toFixed(2)}</td>
-                    <td className="px-2 py-1 font-mono">${row.total_earning.toFixed(2)}</td>
+                    <td className="px-2 py-1 font-mono">${parseFloat(String(row.total_earning)).toFixed(2)}</td>
                   </tr>
                 );
               })
