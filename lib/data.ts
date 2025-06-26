@@ -190,7 +190,7 @@ export async function fetchDashboardData() {
     });
 
     const userId = row.userId;
-    const earning = row.earning || 0;
+    const earning = Number(row.earning) || 0;
     const country = row.country;
 
     earningPerUser[userId] = (earningPerUser[userId] || 0) + earning;

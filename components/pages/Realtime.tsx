@@ -12,7 +12,6 @@ import { playAudio } from "@/lib/Notif_lead";
 import axios from "axios";
 
 export default function DashboardPage(props: any) {
-  const audioRef = useRef<HTMLAudioElement>(null);
   const { theme, setTheme } = useTheme();
   const [dashboardData, setDashboardData] = useState(props);
   const [selectedTab, setSelectedTab] = useState("realtime");

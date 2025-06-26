@@ -115,7 +115,7 @@ export async function fetchSummary(saiki: string | Date | admin.firestore.Timest
       const createdAt = dayjs(lead.created_at).tz("Asia/Jakarta");
       if (createdAt.isSameOrAfter(now) && createdAt.isSameOrBefore(to)) {
         const userId = lead.userId;
-        const earning = lead.earning || 0;
+        const earning = Number(lead.earning) || 0;
         hitungLead[userId] = (hitungLead[userId] || 0) + 1;
         hitungEarning[userId] = (hitungEarning[userId] || 0) + earning;
       }

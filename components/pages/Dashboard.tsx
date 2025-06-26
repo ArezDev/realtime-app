@@ -424,7 +424,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 {data.topUsers.slice(0, 3).map((user, i) => (
                   <li key={i}>
                     <span className="font-semibold text-blue-500">{i + 1}.</span> {user.username}{" "}
-                    <span className="text-sm text-zinc-500">(${user.total})</span>
+                    <span className="text-sm text-zinc-500">(${user.total.toFixed(2)})</span>
                   </li>
                 ))}
               </ul>
