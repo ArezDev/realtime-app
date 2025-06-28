@@ -762,7 +762,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
                 <div className="flex items-center space-x-3">
                   <DollarSign className="w-4 h-4 text-yellow-500" />
                   <span className="font-mono text-1xl">
-                    <strong>Earning: </strong> {selectedLead.earning.toFixed(2)}
+                    <strong>Earning: </strong> {selectedLead.earning}
                   </span>
                 </div>
                 {/* UA */}
