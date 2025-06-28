@@ -16,9 +16,10 @@ export async function fetchDashboardData() {
   const todayDate = now.format("YYYY-MM-DD");
   const currentHour = now.format("HH");
 
-  const startTime = now.hour() < 5
-    ? now.subtract(1, "day").hour(5).minute(0).second(0)
-    : now.hour(5).minute(0).second(0);
+  const startTime =
+    now.hour() < 5
+      ? now.subtract(1, "day").hour(5).minute(0).second(0)
+      : now.hour(5).minute(0).second(0);
   const endTime = startTime.add(24, "hour").subtract(1, "second");
 
   // === Ambil semua leads ===
@@ -157,7 +158,10 @@ export async function fetchDashboardData() {
      FROM leads
      WHERE created_at BETWEEN ? AND ?
      ORDER BY created_at DESC`,
-    [startTime.format("YYYY-MM-DD HH:mm:ss"), endTime.format("YYYY-MM-DD HH:mm:ss")]
+    [
+      startTime.format("YYYY-MM-DD HH:mm:ss"),
+      endTime.format("YYYY-MM-DD HH:mm:ss"),
+    ]
   );
 
   const leads: {
@@ -231,7 +235,7 @@ export async function fetchDashboardData() {
     source: row.source,
     gadget: row.gadget,
     ip: row.ip,
-    created_at: dayjs(row.created_at).toDate(),
+    created_at: dayjs(row.created_at).tz("Asia/Jakarta").toDate(),
   }));
 
   // === Ambil 15 live clicks terakhir dari MySQL ===
@@ -249,7 +253,7 @@ export async function fetchDashboardData() {
     source: row.source,
     gadget: row.gadget,
     ip: row.ip,
-    created_at: dayjs(row.created_at).toDate(),
+    created_at: dayjs(row.created_at).tz("Asia/Jakarta").toDate(),
   }));
 
   // === Ambil summary terakhir dari MySQL ===
@@ -263,7 +267,7 @@ export async function fetchDashboardData() {
     user: row.user,
     total_earning: row.total_earning,
     total_click: row.total_click,
-    created_at: dayjs(row.created_at).toDate(),
+    created_at: dayjs(row.created_at).tz("Asia/Jakarta").toDate(),
     created_date: row.created_date,
     created_hour: row.created_hour,
     created_week: row.created_week,
