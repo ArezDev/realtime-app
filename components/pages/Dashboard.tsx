@@ -151,6 +151,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
       try {
         const res = await axios.get("/api/top_country");
         if (res.data) {
+          console.log(res.data);
           setCountryData(res.data.data);
         }
       } catch (error) {
