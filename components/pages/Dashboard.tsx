@@ -201,7 +201,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
 
   const getIPinfo = async (ip: string) => {
     const result = await axios.get(`https://ipwhois.pro/${ip}`, {
-      params: { key: "4OehYgGBlw8CpI5x" },
+      params: { key: process.env.IPWHOIS_APIKEY },
     });
     if (result?.data) {
       setWhatIsMyIP(result.data);
