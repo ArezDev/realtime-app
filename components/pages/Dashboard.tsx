@@ -200,12 +200,16 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
   });
 
   const getIPinfo = async (ip: string) => {
-    const result = await axios.get(`https://ipwhois.pro/${ip}`, {
-      params: { key: process.env.IPWHOIS_APIKEY },
+    // const result = await axios.get(`https://ipwhois.pro/${ip}`, {
+    //   params: { key: process.env.IPWHOIS_APIKEY },
+    // });
+    // if (result?.data) {
+    //   setWhatIsMyIP(result.data);
+    // }
+    const { data } = await axios.get(`https://ipwhois.pro/${ip}`, {
+      params: { key: process.env.NEXT_PUBLIC_IPWHOIS_APIKEY }
     });
-    if (result?.data) {
-      setWhatIsMyIP(result.data);
-    }
+    setWhatIsMyIP(data ?? {});
   };
 
   const openModal = (lead: Lead) => {
@@ -951,3 +955,4 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     </div>
   );
 }
+
