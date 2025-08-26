@@ -207,7 +207,7 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     //   setWhatIsMyIP(result.data);
     // }
     const { data } = await axios.get(`https://ipwhois.pro/${ip}`, {
-      params: { key: process.env.NEXT_PUBLIC_IPWHOIS_APIKEY }
+      params: { key: "4OehYgGBlw8CpI5x" }
     });
     setWhatIsMyIP(data ?? {});
   };
@@ -955,4 +955,5 @@ export function RealtimeTab({ data }: { data: DashboardData }) {
     </div>
   );
 }
+
 
